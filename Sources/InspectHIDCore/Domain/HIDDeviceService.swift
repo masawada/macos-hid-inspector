@@ -155,4 +155,16 @@ public final class HIDDeviceService: HIDDeviceServiceProtocol, @unchecked Sendab
         reportCallback = nil
         disconnectCallback = nil
     }
+
+    // MARK: - Run Loop Control
+
+    /// Run the event loop for receiving reports (blocking)
+    public func runLoop() {
+        adapter.runLoop()
+    }
+
+    /// Stop the event loop
+    public func stopRunLoop() {
+        adapter.stopRunLoop()
+    }
 }

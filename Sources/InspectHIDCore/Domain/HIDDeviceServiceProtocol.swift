@@ -28,4 +28,12 @@ public protocol HIDDeviceServiceProtocol: Sendable {
 
     /// Stop monitoring and release resources
     func stopMonitoring()
+
+    // MARK: - Run Loop Control
+
+    /// Run the event loop for receiving reports (blocking)
+    func runLoop()
+
+    /// Stop the event loop
+    func stopRunLoop()
 }

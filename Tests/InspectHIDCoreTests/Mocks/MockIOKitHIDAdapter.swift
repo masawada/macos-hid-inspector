@@ -47,6 +47,7 @@ final class MockIOKitHIDAdapter: IOKitHIDAdapterProtocol, @unchecked Sendable {
     private(set) var openedDevices: [MockHIDDeviceHandle] = []
     private var inputCallbacksWithId: [ObjectIdentifier: (Int, Data) -> Void] = [:]
     private var removalCallbacks: [ObjectIdentifier: () -> Void] = [:]
+    private(set) var stopRunLoopCalled: Bool = false
 
     init(devices: [MockHIDDeviceHandle]) {
         self.devices = devices
@@ -142,7 +143,7 @@ final class MockIOKitHIDAdapter: IOKitHIDAdapterProtocol, @unchecked Sendable {
     }
 
     func stopRunLoop() {
-        // No-op for testing
+        stopRunLoopCalled = true
     }
 
     // MARK: - Test Helpers
