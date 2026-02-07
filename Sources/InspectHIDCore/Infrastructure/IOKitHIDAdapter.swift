@@ -37,7 +37,26 @@ public final class IOKitHIDAdapter: IOKitHIDAdapterProtocol, @unchecked Sendable
             return []
         }
 
-        let devices = (deviceSet as! Set<IOHIDDevice>).map { IOHIDDeviceHandle(device: $0) }
+        // Sort devices by location ID to ensure consistent ordering across runs
+        // (Set iteration order is non-deterministic)
+        let sortedDevices = (deviceSet as! Set<IOHIDDevice>).sorted { device1, device2 in
+            let locationId1 = getIntProperty(device1, key: kIOHIDLocationIDKey) ?? 0
+            let locationId2 = getIntProperty(device2, key: kIOHIDLocationIDKey) ?? 0
+            if locationId1 != locationId2 {
+                return locationId1 < locationId2
+            }
+            // Secondary sort by vendor ID, then product ID for stability
+            let vendorId1 = getIntProperty(device1, key: kIOHIDVendorIDKey) ?? 0
+            let vendorId2 = getIntProperty(device2, key: kIOHIDVendorIDKey) ?? 0
+            if vendorId1 != vendorId2 {
+                return vendorId1 < vendorId2
+            }
+            let productId1 = getIntProperty(device1, key: kIOHIDProductIDKey) ?? 0
+            let productId2 = getIntProperty(device2, key: kIOHIDProductIDKey) ?? 0
+            return productId1 < productId2
+        }
+
+        let devices = sortedDevices.map { IOHIDDeviceHandle(device: $0) }
         return devices
     }
 
