@@ -4,27 +4,28 @@ import Foundation
 public struct IOKitErrorMapper {
 
     // MARK: - Common IOKit Return Codes
+    // Values from IOKit/IOReturn.h: iokit_common_err(x) = 0xE0000000 | x
 
     /// kIOReturnSuccess
     public static let kIOReturnSuccess: Int32 = 0
 
-    /// kIOReturnNotPermitted - permission error
-    public static let kIOReturnNotPermitted: Int32 = -536870212
+    /// kIOReturnNoDevice - iokit_common_err(0x2c0)
+    public static let kIOReturnNoDevice: Int32 = Int32(bitPattern: 0xE00002C0)
 
-    /// kIOReturnNotPrivileged - privilege error
-    public static let kIOReturnNotPrivileged: Int32 = -536870203
+    /// kIOReturnNotPrivileged - iokit_common_err(0x2c1) - privilege violation
+    public static let kIOReturnNotPrivileged: Int32 = Int32(bitPattern: 0xE00002C1)
 
-    /// kIOReturnBadArgument
-    public static let kIOReturnBadArgument: Int32 = -536870220
+    /// kIOReturnBadArgument - iokit_common_err(0x2c2)
+    public static let kIOReturnBadArgument: Int32 = Int32(bitPattern: 0xE00002C2)
 
-    /// kIOReturnNoDevice
-    public static let kIOReturnNoDevice: Int32 = -536870208
+    /// kIOReturnExclusiveAccess - iokit_common_err(0x2c5)
+    public static let kIOReturnExclusiveAccess: Int32 = Int32(bitPattern: 0xE00002C5)
 
-    /// kIOReturnNotAttached
-    public static let kIOReturnNotAttached: Int32 = -536870206
+    /// kIOReturnNotAttached - iokit_common_err(0x2d9)
+    public static let kIOReturnNotAttached: Int32 = Int32(bitPattern: 0xE00002D9)
 
-    /// kIOReturnExclusiveAccess
-    public static let kIOReturnExclusiveAccess: Int32 = -536870189
+    /// kIOReturnNotPermitted - iokit_common_err(0x2e2)
+    public static let kIOReturnNotPermitted: Int32 = Int32(bitPattern: 0xE00002E2)
 
     // MARK: - Mapping
 

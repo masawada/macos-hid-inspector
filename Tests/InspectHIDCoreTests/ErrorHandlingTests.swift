@@ -29,10 +29,10 @@ struct ErrorHandlingTests {
 
         @Test("ioKitError converts code to Swift Error correctly")
         func ioKitErrorConversion() {
-            let error = InspectHIDError.ioKitError(code: -536870212) // kIOReturnNotPermitted
+            let error = InspectHIDError.ioKitError(code: -12345)
             #expect(error.exitCode == 1)
             let description = error.errorDescription ?? ""
-            #expect(description.contains("-536870212"))
+            #expect(description.contains("-12345"))
         }
 
         @Test("deviceNotFound has exit code 1")
@@ -142,7 +142,7 @@ struct ErrorHandlingTests {
 
         @Test("MockIOKitHIDAdapter can throw ioKitError")
         func mockAdapterThrowsIOKitError() throws {
-            let errorCode: Int32 = -536870212 // kIOReturnNotPermitted
+            let errorCode: Int32 = -12345
             let mockAdapter = MockIOKitHIDAdapterWithErrors(error: .ioKitError(code: errorCode))
             do {
                 _ = try mockAdapter.enumerateDevices()
@@ -173,7 +173,7 @@ struct ErrorHandlingTests {
 
         @Test("HIDDeviceService propagates ioKitError from adapter")
         func servicePropagatesIOKitError() throws {
-            let errorCode: Int32 = -536870206 // kIOReturnNotAttached
+            let errorCode: Int32 = -12345
             let mockAdapter = MockIOKitHIDAdapterWithErrors(error: .ioKitError(code: errorCode))
             let service = HIDDeviceService(adapter: mockAdapter)
 
@@ -193,13 +193,12 @@ struct ErrorHandlingTests {
 
         @Test("kIOReturnNotPermitted maps to permissionDenied error")
         func notPermittedMapsToPermissionDenied() {
-            // kIOReturnNotPermitted = 0xE00002C2 = -536870206 (actual value differs)
-            // Common permission-related codes
-            let permissionRelatedCode: Int32 = -536870212 // common permission error
-
-            let error = IOKitErrorMapper.mapToInspectHIDError(code: permissionRelatedCode)
-            // Permission errors should be detected and mapped appropriately
-            #expect(error.exitCode == 2 || error.exitCode == 1)
+            let error = IOKitErrorMapper.mapToInspectHIDError(code: IOKitErrorMapper.kIOReturnNotPermitted)
+            if case .permissionDenied = error {
+                #expect(error.exitCode == 2)
+            } else {
+                Issue.record("Should map to permissionDenied")
+            }
         }
 
         @Test("General IOKit error preserves error code")
