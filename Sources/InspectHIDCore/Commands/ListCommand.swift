@@ -1,4 +1,5 @@
 import ArgumentParser
+import Foundation
 
 /// Lists all connected USB HID devices.
 public struct ListCommand: ParsableCommand {
@@ -13,6 +14,25 @@ public struct ListCommand: ParsableCommand {
     public init() {}
 
     public mutating func run() throws {
-        print("list command executed (stub)")
+        let service = HIDDeviceService()
+
+        do {
+            let devices = try service.listDevices()
+
+            let output: String
+            if json {
+                output = JSONFormatter.formatDeviceList(devices)
+            } else {
+                output = TextFormatter.formatDeviceList(devices)
+            }
+
+            print(output)
+        } catch let error as InspectHIDError {
+            FileHandle.standardError.write(Data((TextFormatter.formatError(error) + "\n").utf8))
+            throw ExitCode(error.exitCode)
+        } catch {
+            FileHandle.standardError.write(Data((TextFormatter.formatError(error) + "\n").utf8))
+            throw ExitCode.failure
+        }
     }
 }
