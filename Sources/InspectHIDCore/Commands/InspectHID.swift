@@ -7,7 +7,12 @@ public struct InspectHID: ParsableCommand {
         commandName: "inspect-hid",
         abstract: "Inspect Human Interface Devices (HID) connected to the system",
         version: InspectHIDCore.version,
-        subcommands: []
+        subcommands: [
+            ListCommand.self,
+            DescriptorCommand.self,
+            UsageCommand.self,
+            MonitorCommand.self
+        ]
     )
 
     public init() {}
