@@ -10,4 +10,15 @@ public protocol HIDDeviceServiceProtocol: Sendable {
 
     /// Get Report Descriptor raw bytes for specified device
     func getReportDescriptor(specifier: DeviceSpecifier) throws -> Data
+
+    // MARK: - Monitoring
+
+    /// Start monitoring HID reports from specified device
+    /// - Parameters:
+    ///   - specifier: Device to monitor
+    ///   - onReport: Callback called when a report is received
+    func startMonitoring(specifier: DeviceSpecifier, onReport: @escaping (HIDReport) -> Void) throws
+
+    /// Stop monitoring and release resources
+    func stopMonitoring()
 }

@@ -4,6 +4,10 @@ import Foundation
 public final class HIDDeviceService: HIDDeviceServiceProtocol, @unchecked Sendable {
     private let adapter: any IOKitHIDAdapterProtocol
 
+    // MARK: - Monitoring State
+    private var currentMonitoringDevice: (any HIDDeviceHandle)?
+    private var reportCallback: ((HIDReport) -> Void)?
+
     public init(adapter: any IOKitHIDAdapterProtocol = IOKitHIDAdapter()) {
         self.adapter = adapter
     }
@@ -96,5 +100,38 @@ public final class HIDDeviceService: HIDDeviceServiceProtocol, @unchecked Sendab
         let minorLow = minorBcd & 0x0F
         let minor = minorHigh * 10 + minorLow
         return String(format: "%d.%02d", major, minor)
+    }
+
+    // MARK: - Monitoring
+
+    /// Start monitoring HID reports from specified device
+    public func startMonitoring(specifier: DeviceSpecifier, onReport: @escaping (HIDReport) -> Void) throws {
+        let devices = try adapter.enumerateDevices()
+        let device = try resolveDevice(specifier: specifier, from: devices)
+
+        currentMonitoringDevice = device
+        reportCallback = onReport
+
+        try adapter.open(device)
+
+        adapter.registerInputReportCallbackWithId(device) { [weak self] reportId, data in
+            guard let self = self, let callback = self.reportCallback else { return }
+
+            let report = HIDReport(
+                timestamp: Date(),
+                data: data,
+                reportId: reportId
+            )
+            callback(report)
+        }
+    }
+
+    /// Stop monitoring and release resources
+    public func stopMonitoring() {
+        if let device = currentMonitoringDevice {
+            adapter.close(device)
+        }
+        currentMonitoringDevice = nil
+        reportCallback = nil
     }
 }
