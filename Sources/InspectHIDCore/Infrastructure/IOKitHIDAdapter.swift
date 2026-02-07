@@ -7,6 +7,7 @@ public final class IOKitHIDAdapter: IOKitHIDAdapterProtocol, @unchecked Sendable
     public init() {}
 
     /// Enumerate all connected HID devices using IOHIDManager
+    /// - Throws: InspectHIDError for permission or IOKit errors
     public func enumerateDevices() throws -> [any HIDDeviceHandle] {
         // Create HID Manager
         let manager = IOHIDManagerCreate(kCFAllocatorDefault, IOOptionBits(kIOHIDOptionsTypeNone))
@@ -14,10 +15,10 @@ public final class IOKitHIDAdapter: IOKitHIDAdapterProtocol, @unchecked Sendable
         // Set device matching to all HID devices
         IOHIDManagerSetDeviceMatching(manager, nil)
 
-        // Open manager
+        // Open manager with error handling
         let openResult = IOHIDManagerOpen(manager, IOOptionBits(kIOHIDOptionsTypeNone))
         guard openResult == kIOReturnSuccess else {
-            return []
+            throw IOKitErrorMapper.mapToInspectHIDError(code: openResult)
         }
 
         defer {
