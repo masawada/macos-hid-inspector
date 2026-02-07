@@ -74,27 +74,50 @@ public enum TextFormatter {
 
     // MARK: - Report Descriptor Formatting
 
-    /// Format a Report Descriptor with collection hierarchy
+    /// Format a Report Descriptor as a byte-level dump with human-readable descriptions
     /// - Parameters:
-    ///   - collections: Collection tree from parsed descriptor
-    ///   - rawBytes: Raw descriptor bytes
+    ///   - parsedItems: Parsed items with raw bytes
     ///   - usageLookup: Usage table lookup for name resolution
-    /// - Returns: Formatted string with collection hierarchy
+    /// - Returns: Formatted string with byte-level dump
     public static func formatReportDescriptor(
-        collections: [CollectionNode],
-        rawBytes: Data,
+        parsedItems: [ParsedItem],
         usageLookup: UsageTableLookupProtocol
     ) -> String {
-        if collections.isEmpty {
-            return "No collections found in Report Descriptor."
+        if parsedItems.isEmpty {
+            return "No items found in Report Descriptor."
         }
 
-        var lines: [String] = []
-        lines.append("Report Descriptor:")
-        lines.append(String(repeating: "-", count: 50))
+        // Compute max byte column width for alignment
+        let maxByteWidth = parsedItems.map { $0.rawBytes.count }.max() ?? 1
+        // Each byte is "0xHH" (4 chars), joined by " " (1 char) → width = count * 5 - 1
+        let padWidth = maxByteWidth * 5 - 1
 
-        for collection in collections {
-            formatCollection(collection, indent: 0, lines: &lines, usageLookup: usageLookup)
+        var lines: [String] = []
+        var indentLevel = 0
+        var currentUsagePage: UInt16 = 0
+
+        for parsedItem in parsedItems {
+            // Decrement indent before formatting End Collection
+            if case .endCollection = parsedItem.item {
+                indentLevel = max(0, indentLevel - 1)
+            }
+
+            let bytesStr = parsedItem.rawBytes.map { String(format: "0x%02X", $0) }.joined(separator: " ")
+            let indent = String(repeating: "  ", count: indentLevel)
+            let description = describeItem(parsedItem.item, currentUsagePage: currentUsagePage, usageLookup: usageLookup)
+
+            let paddedBytes = bytesStr.padding(toLength: padWidth, withPad: " ", startingAt: 0)
+            lines.append("\(paddedBytes) // \(indent)\(description)")
+
+            // Track state
+            if case .usagePage(let page) = parsedItem.item {
+                currentUsagePage = page
+            }
+
+            // Increment indent after formatting Collection
+            if case .collection = parsedItem.item {
+                indentLevel += 1
+            }
         }
 
         return lines.joined(separator: "\n")
@@ -114,36 +137,141 @@ public enum TextFormatter {
         return lines.joined(separator: "\n")
     }
 
-    // MARK: - Private Collection Formatting
+    // MARK: - Private Item Description
 
-    private static func formatCollection(
-        _ collection: CollectionNode,
-        indent: Int,
-        lines: inout [String],
+    private static func describeItem(
+        _ item: ReportDescriptorItem,
+        currentUsagePage: UInt16,
         usageLookup: UsageTableLookupProtocol
-    ) {
-        let prefix = String(repeating: "  ", count: indent)
+    ) -> String {
+        switch item {
+        case .usagePage(let page):
+            let name = usageLookup.lookupPageName(page: page)
+            return "Usage Page (\(name))"
+        case .usage(let usage):
+            if usage > 0xFFFF {
+                // Extended usage: upper 16 bits = page, lower 16 bits = usage
+                let page = UInt16((usage >> 16) & 0xFFFF)
+                let usageId = UInt16(usage & 0xFFFF)
+                let name = usageLookup.lookupUsageName(page: page, usage: usageId)
+                return "Usage (\(name))"
+            }
+            let name = usageLookup.lookupUsageName(page: currentUsagePage, usage: UInt16(usage & 0xFFFF))
+            return "Usage (\(name))"
+        case .usageMinimum(let value):
+            if value > 0xFFFF {
+                let page = UInt16((value >> 16) & 0xFFFF)
+                let usageId = UInt16(value & 0xFFFF)
+                let name = usageLookup.lookupUsageName(page: page, usage: usageId)
+                return "Usage Minimum (\(name))"
+            }
+            let name = usageLookup.lookupUsageName(page: currentUsagePage, usage: UInt16(value & 0xFFFF))
+            return "Usage Minimum (\(name))"
+        case .usageMaximum(let value):
+            if value > 0xFFFF {
+                let page = UInt16((value >> 16) & 0xFFFF)
+                let usageId = UInt16(value & 0xFFFF)
+                let name = usageLookup.lookupUsageName(page: page, usage: usageId)
+                return "Usage Maximum (\(name))"
+            }
+            let name = usageLookup.lookupUsageName(page: currentUsagePage, usage: UInt16(value & 0xFFFF))
+            return "Usage Maximum (\(name))"
+        case .collection(let type):
+            return "Collection (\(type.name))"
+        case .endCollection:
+            return "End Collection"
+        case .input(let flags):
+            return "Input (\(describeIOFlags(flags, isOutput: false)))"
+        case .output(let flags):
+            return "Output (\(describeIOFlags(flags, isOutput: true)))"
+        case .feature(let flags):
+            return "Feature (\(describeIOFlags(flags, isOutput: true)))"
+        case .logicalMinimum(let value):
+            return "Logical Minimum (\(value))"
+        case .logicalMaximum(let value):
+            return "Logical Maximum (\(value))"
+        case .physicalMinimum(let value):
+            return "Physical Minimum (\(value))"
+        case .physicalMaximum(let value):
+            return "Physical Maximum (\(value))"
+        case .unitExponent(let value):
+            return "Unit Exponent (\(value))"
+        case .unit(let value):
+            return "Unit (\(String(format: "0x%08X", value)))"
+        case .reportSize(let value):
+            return "Report Size (\(value))"
+        case .reportId(let value):
+            return "Report ID (\(value))"
+        case .reportCount(let value):
+            return "Report Count (\(value))"
+        case .push:
+            return "Push"
+        case .pop:
+            return "Pop"
+        case .designatorIndex(let value):
+            return "Designator Index (\(value))"
+        case .designatorMinimum(let value):
+            return "Designator Minimum (\(value))"
+        case .designatorMaximum(let value):
+            return "Designator Maximum (\(value))"
+        case .stringIndex(let value):
+            return "String Index (\(value))"
+        case .stringMinimum(let value):
+            return "String Minimum (\(value))"
+        case .stringMaximum(let value):
+            return "String Maximum (\(value))"
+        case .delimiter(let value):
+            return "Delimiter (\(value))"
+        case .unknown(let tag, let data):
+            let hex = data.map { String(format: "0x%02X", $0) }.joined(separator: " ")
+            return "Unknown (tag=\(String(format: "0x%02X", tag)), data=\(hex))"
+        }
+    }
 
-        // Collection header
-        lines.append("\(prefix)Collection (\(collection.type.name))")
+    /// Decode Input/Output/Feature flag bits into human-readable description
+    private static func describeIOFlags(_ flags: UInt32, isOutput: Bool) -> String {
+        let isConstant = (flags & 0x01) != 0
+        let isVariable = (flags & 0x02) != 0
+        let isRelative = (flags & 0x04) != 0
+        let isWrap = (flags & 0x08) != 0
+        let isNonLinear = (flags & 0x10) != 0
+        let isNoPreferred = (flags & 0x20) != 0
+        let isNullState = (flags & 0x40) != 0
+        let isVolatile = (flags & 0x80) != 0
+        let isBufferedBytes = (flags & 0x100) != 0
 
-        // Usage Page
-        let pageName = usageLookup.lookupPageName(page: collection.usagePage)
-        lines.append("\(prefix)  Usage Page: \(pageName)")
-
-        // Usage
-        let usageName = usageLookup.lookupUsageName(
-            page: collection.usagePage,
-            usage: UInt16(collection.usage & 0xFFFF)
-        )
-        lines.append("\(prefix)  Usage: \(usageName)")
-
-        // Recursively format children
-        for child in collection.children {
-            formatCollection(child, indent: indent + 1, lines: &lines, usageLookup: usageLookup)
+        if isConstant {
+            var parts = ["Constant"]
+            if isVariable { parts.append("Variable") }
+            if isRelative { parts.append("Relative") }
+            if isWrap { parts.append("Wrap") }
+            if isNonLinear { parts.append("Non Linear") }
+            if isNoPreferred { parts.append("No Preferred") }
+            if isNullState { parts.append("Null state") }
+            if isOutput && isVolatile { parts.append("Volatile") }
+            if isBufferedBytes { parts.append("Buffered Bytes") }
+            return parts.joined(separator: ", ")
         }
 
-        lines.append("\(prefix)End Collection")
+        // Data item: always show Data, Variable/Array, and Absolute/Relative if Variable
+        var parts = ["Data"]
+        if isVariable {
+            parts.append("Variable")
+            parts.append(isRelative ? "Relative" : "Absolute")
+        } else {
+            parts.append("Array")
+            if isRelative { parts.append("Relative") }
+        }
+
+        // Show non-default flags
+        if isWrap { parts.append("Wrap") }
+        if isNonLinear { parts.append("Non Linear") }
+        if isNoPreferred { parts.append("No Preferred") }
+        if isNullState { parts.append("Null state") }
+        if isOutput && isVolatile { parts.append("Volatile") }
+        if isBufferedBytes { parts.append("Buffered Bytes") }
+
+        return parts.joined(separator: ", ")
     }
 
     // MARK: - Error Formatting

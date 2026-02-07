@@ -241,8 +241,7 @@ struct E2ESubcommandTests {
         // When: Parsing and formatting
         let descriptor = try parser.parse(data: descriptorBytes)
         let output = TextFormatter.formatReportDescriptor(
-            collections: descriptor.collections,
-            rawBytes: descriptor.rawBytes,
+            parsedItems: descriptor.parsedItems,
             usageLookup: usageLookup
         )
 

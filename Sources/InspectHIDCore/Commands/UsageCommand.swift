@@ -52,8 +52,7 @@ public struct UsageCommand: ParsableCommand {
                 ))
             } else {
                 print(TextFormatter.formatReportDescriptor(
-                    collections: descriptor.collections,
-                    rawBytes: descriptor.rawBytes,
+                    parsedItems: descriptor.parsedItems,
                     usageLookup: usageLookup
                 ))
             }

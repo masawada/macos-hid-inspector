@@ -18,16 +18,19 @@ public struct ReportDescriptorParser: ReportDescriptorParserProtocol, Sendable {
 
     public func parse(data: Data) throws -> ReportDescriptor {
         guard !data.isEmpty else {
-            return ReportDescriptor(rawBytes: data, items: [], collections: [])
+            return ReportDescriptor(rawBytes: data, items: [], parsedItems: [], collections: [])
         }
 
         var items: [ReportDescriptorItem] = []
+        var parsedItems: [ParsedItem] = []
         var index = 0
 
         while index < data.count {
             do {
                 let (item, bytesConsumed) = try parseItem(data: data, at: index)
+                let rawBytes = data[index..<(index + bytesConsumed)]
                 items.append(item)
+                parsedItems.append(ParsedItem(item: item, rawBytes: Data(rawBytes)))
                 index += bytesConsumed
             } catch {
                 // Fallback: include raw bytes information in error
@@ -40,7 +43,7 @@ public struct ReportDescriptorParser: ReportDescriptorParserProtocol, Sendable {
         // Build collection tree
         let collections = buildCollectionTree(items: items)
 
-        return ReportDescriptor(rawBytes: data, items: items, collections: collections)
+        return ReportDescriptor(rawBytes: data, items: items, parsedItems: parsedItems, collections: collections)
     }
 
     // MARK: - Private Parsing Methods

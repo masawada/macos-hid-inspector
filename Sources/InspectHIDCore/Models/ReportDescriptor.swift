@@ -86,6 +86,17 @@ public struct CollectionNode: Sendable {
     }
 }
 
+/// A parsed HID Report Descriptor item paired with its raw bytes
+public struct ParsedItem: Sendable, Equatable {
+    public let item: ReportDescriptorItem
+    public let rawBytes: Data
+
+    public init(item: ReportDescriptorItem, rawBytes: Data) {
+        self.item = item
+        self.rawBytes = rawBytes
+    }
+}
+
 /// Parsed HID Report Descriptor
 public struct ReportDescriptor: Sendable {
     /// The raw bytes of the descriptor
@@ -94,16 +105,21 @@ public struct ReportDescriptor: Sendable {
     /// All parsed items in order
     public let items: [ReportDescriptorItem]
 
+    /// Parsed items with their raw bytes
+    public let parsedItems: [ParsedItem]
+
     /// The collection tree structure
     public let collections: [CollectionNode]
 
     public init(
         rawBytes: Data,
         items: [ReportDescriptorItem] = [],
+        parsedItems: [ParsedItem] = [],
         collections: [CollectionNode] = []
     ) {
         self.rawBytes = rawBytes
         self.items = items
+        self.parsedItems = parsedItems
         self.collections = collections
     }
 }

@@ -30,61 +30,53 @@ struct UsageCommandTests {
     }
 }
 
-/// Tests for TextFormatter Usage formatting
+/// Tests for TextFormatter Usage formatting (byte-level dump format)
 @Suite("TextFormatter Usage Tests")
 struct TextFormatterUsageTests {
 
-    @Test("formatReportDescriptor displays collection hierarchy with indentation")
-    func formatCollectionHierarchy() {
+    @Test("formatReportDescriptor displays byte-level dump with descriptions")
+    func formatByteLevelDump() {
         let lookup = UsageTableLookup()
-        let collections = [
-            CollectionNode(
-                usagePage: 0x01,  // Generic Desktop
-                usage: 0x02,     // Mouse
-                type: .application,
-                children: [
-                    CollectionNode(
-                        usagePage: 0x01,
-                        usage: 0x01,  // Pointer
-                        type: .physical,
-                        children: [],
-                        items: []
-                    )
-                ],
-                items: []
-            )
-        ]
+        let parser = ReportDescriptorParser()
+        let data = Data([
+            0x05, 0x01,  // Usage Page (Generic Desktop)
+            0x09, 0x02,  // Usage (Mouse)
+            0xA1, 0x01,  // Collection (Application)
+            0x09, 0x01,  //   Usage (Pointer)
+            0xA1, 0x00,  //   Collection (Physical)
+            0xC0,        //   End Collection
+            0xC0         // End Collection
+        ])
+        let descriptor = try! parser.parse(data: data)
 
         let output = TextFormatter.formatReportDescriptor(
-            collections: collections,
-            rawBytes: Data([0x05, 0x01]),
+            parsedItems: descriptor.parsedItems,
             usageLookup: lookup
         )
 
-        // Verify collection hierarchy with indentation
+        // Verify byte-level hex dump
+        #expect(output.contains("0x05 0x01"))
+        #expect(output.contains("0x09 0x02"))
+        #expect(output.contains("0xA1 0x01"))
+        #expect(output.contains("0xC0"))
+
+        // Verify descriptions
+        #expect(output.contains("Usage Page (Generic Desktop Page)"))
+        #expect(output.contains("Usage (Mouse)"))
         #expect(output.contains("Collection (Application)"))
-        #expect(output.contains("Usage Page: Generic Desktop Page"))
-        #expect(output.contains("Usage: Mouse"))
         #expect(output.contains("Collection (Physical)"))
-        #expect(output.contains("Pointer"))
+        #expect(output.contains("End Collection"))
     }
 
     @Test("formatReportDescriptor displays Usage Page name")
     func formatUsagePageName() {
         let lookup = UsageTableLookup()
-        let collections = [
-            CollectionNode(
-                usagePage: 0x01,  // Generic Desktop
-                usage: 0x02,
-                type: .application,
-                children: [],
-                items: []
-            )
+        let parsedItems = [
+            ParsedItem(item: .usagePage(0x01), rawBytes: Data([0x05, 0x01]))
         ]
 
         let output = TextFormatter.formatReportDescriptor(
-            collections: collections,
-            rawBytes: Data(),
+            parsedItems: parsedItems,
             usageLookup: lookup
         )
 
@@ -94,41 +86,28 @@ struct TextFormatterUsageTests {
     @Test("formatReportDescriptor displays Usage name")
     func formatUsageName() {
         let lookup = UsageTableLookup()
-        let collections = [
-            CollectionNode(
-                usagePage: 0x01,  // Generic Desktop
-                usage: 0x02,     // Mouse
-                type: .application,
-                children: [],
-                items: []
-            )
+        let parsedItems = [
+            ParsedItem(item: .usagePage(0x01), rawBytes: Data([0x05, 0x01])),
+            ParsedItem(item: .usage(0x02), rawBytes: Data([0x09, 0x02]))
         ]
 
         let output = TextFormatter.formatReportDescriptor(
-            collections: collections,
-            rawBytes: Data(),
+            parsedItems: parsedItems,
             usageLookup: lookup
         )
 
-        #expect(output.contains("Mouse"))
+        #expect(output.contains("Usage (Mouse)"))
     }
 
     @Test("formatReportDescriptor shows hex for unknown Usage Page")
     func formatUnknownUsagePage() {
         let lookup = UsageTableLookup()
-        let collections = [
-            CollectionNode(
-                usagePage: 0xFFFF,  // Unknown
-                usage: 0x01,
-                type: .application,
-                children: [],
-                items: []
-            )
+        let parsedItems = [
+            ParsedItem(item: .usagePage(0xFFFF), rawBytes: Data([0x06, 0xFF, 0xFF]))
         ]
 
         let output = TextFormatter.formatReportDescriptor(
-            collections: collections,
-            rawBytes: Data(),
+            parsedItems: parsedItems,
             usageLookup: lookup
         )
 
@@ -148,59 +127,160 @@ struct TextFormatterUsageTests {
         #expect(output.contains("05 01 09 02"))
     }
 
-    @Test("formatReportDescriptor handles empty collections")
-    func formatEmptyCollections() {
+    @Test("formatReportDescriptor handles empty parsed items")
+    func formatEmptyParsedItems() {
         let lookup = UsageTableLookup()
-        let collections: [CollectionNode] = []
+        let parsedItems: [ParsedItem] = []
 
         let output = TextFormatter.formatReportDescriptor(
-            collections: collections,
-            rawBytes: Data(),
+            parsedItems: parsedItems,
             usageLookup: lookup
         )
 
-        #expect(output.contains("No collections found"))
+        #expect(output.contains("No items found"))
     }
 
-    @Test("formatReportDescriptor displays nested children with proper indentation")
-    func formatNestedChildren() {
+    @Test("formatReportDescriptor indents inside collections")
+    func formatIndentation() {
         let lookup = UsageTableLookup()
-        let collections = [
-            CollectionNode(
-                usagePage: 0x01,
-                usage: 0x02,
-                type: .application,
-                children: [
-                    CollectionNode(
-                        usagePage: 0x01,
-                        usage: 0x01,
-                        type: .physical,
-                        children: [
-                            CollectionNode(
-                                usagePage: 0x09,  // Button
-                                usage: 0x01,
-                                type: .logical,
-                                children: [],
-                                items: []
-                            )
-                        ],
-                        items: []
-                    )
-                ],
-                items: []
-            )
+        let parser = ReportDescriptorParser()
+        let data = Data([
+            0x05, 0x01,  // Usage Page (Generic Desktop)
+            0x09, 0x02,  // Usage (Mouse)
+            0xA1, 0x01,  // Collection (Application)
+            0x09, 0x01,  //   Usage (Pointer)
+            0xA1, 0x00,  //   Collection (Physical)
+            0x05, 0x09,  //     Usage Page (Button)
+            0xC0,        //   End Collection
+            0xC0         // End Collection
+        ])
+        let descriptor = try! parser.parse(data: data)
+
+        let output = TextFormatter.formatReportDescriptor(
+            parsedItems: descriptor.parsedItems,
+            usageLookup: lookup
+        )
+
+        let lines = output.split(separator: "\n").map(String.init)
+
+        // Items inside Application collection should be indented with 2 spaces
+        let pointerLine = lines.first { $0.contains("Usage (Pointer)") }!
+        #expect(pointerLine.contains("//   Usage"))
+
+        // Items inside Physical collection should be indented with 4 spaces
+        let buttonLine = lines.first { $0.contains("Usage Page (Button)") }!
+        #expect(buttonLine.contains("//     Usage Page"))
+    }
+
+    @Test("formatReportDescriptor decodes Input flags")
+    func formatInputFlags() {
+        let lookup = UsageTableLookup()
+        let parsedItems = [
+            ParsedItem(item: .input(0x02), rawBytes: Data([0x81, 0x02])),
+            ParsedItem(item: .input(0x06), rawBytes: Data([0x81, 0x06])),
+            ParsedItem(item: .input(0x01), rawBytes: Data([0x81, 0x01]))
         ]
 
         let output = TextFormatter.formatReportDescriptor(
-            collections: collections,
-            rawBytes: Data(),
+            parsedItems: parsedItems,
             usageLookup: lookup
         )
 
-        // Check proper nesting exists
-        #expect(output.contains("Application"))
-        #expect(output.contains("Physical"))
-        #expect(output.contains("Logical"))
+        #expect(output.contains("Input (Data, Variable, Absolute)"))
+        #expect(output.contains("Input (Data, Variable, Relative)"))
+        #expect(output.contains("Input (Constant)"))
+    }
+
+    @Test("formatReportDescriptor decodes Output flags")
+    func formatOutputFlags() {
+        let lookup = UsageTableLookup()
+        let parsedItems = [
+            ParsedItem(item: .output(0x02), rawBytes: Data([0x91, 0x02]))
+        ]
+
+        let output = TextFormatter.formatReportDescriptor(
+            parsedItems: parsedItems,
+            usageLookup: lookup
+        )
+
+        #expect(output.contains("Output (Data, Variable, Absolute)"))
+    }
+
+    @Test("formatReportDescriptor decodes Feature flags")
+    func formatFeatureFlags() {
+        let lookup = UsageTableLookup()
+        let parsedItems = [
+            ParsedItem(item: .feature(0x02), rawBytes: Data([0xB1, 0x02]))
+        ]
+
+        let output = TextFormatter.formatReportDescriptor(
+            parsedItems: parsedItems,
+            usageLookup: lookup
+        )
+
+        #expect(output.contains("Feature (Data, Variable, Absolute)"))
+    }
+
+    @Test("formatReportDescriptor full mouse descriptor")
+    func formatFullMouseDescriptor() {
+        let lookup = UsageTableLookup()
+        let parser = ReportDescriptorParser()
+        let data = Data([
+            0x05, 0x01,  // Usage Page (Generic Desktop)
+            0x09, 0x02,  // Usage (Mouse)
+            0xA1, 0x01,  // Collection (Application)
+            0x09, 0x01,  //   Usage (Pointer)
+            0xA1, 0x00,  //   Collection (Physical)
+            0x05, 0x09,  //     Usage Page (Button)
+            0x19, 0x01,  //     Usage Minimum (Button 1)
+            0x29, 0x03,  //     Usage Maximum (Button 3)
+            0x15, 0x00,  //     Logical Minimum (0)
+            0x25, 0x01,  //     Logical Maximum (1)
+            0x95, 0x03,  //     Report Count (3)
+            0x75, 0x01,  //     Report Size (1)
+            0x81, 0x02,  //     Input (Data, Variable, Absolute)
+            0x95, 0x01,  //     Report Count (1)
+            0x75, 0x05,  //     Report Size (5)
+            0x81, 0x01,  //     Input (Constant)
+            0x05, 0x01,  //     Usage Page (Generic Desktop)
+            0x09, 0x30,  //     Usage (X)
+            0x09, 0x31,  //     Usage (Y)
+            0x15, 0x81,  //     Logical Minimum (-127)
+            0x25, 0x7F,  //     Logical Maximum (127)
+            0x75, 0x08,  //     Report Size (8)
+            0x95, 0x02,  //     Report Count (2)
+            0x81, 0x06,  //     Input (Data, Variable, Relative)
+            0xC0,        //   End Collection
+            0xC0         // End Collection
+        ])
+        let descriptor = try! parser.parse(data: data)
+
+        let output = TextFormatter.formatReportDescriptor(
+            parsedItems: descriptor.parsedItems,
+            usageLookup: lookup
+        )
+
+        // Verify key elements
+        #expect(output.contains("Usage Page (Generic Desktop Page)"))
+        #expect(output.contains("Usage (Mouse)"))
+        #expect(output.contains("Collection (Application)"))
+        #expect(output.contains("Usage (Pointer)"))
+        #expect(output.contains("Collection (Physical)"))
+        #expect(output.contains("Usage Page (Button)"))
+        #expect(output.contains("Usage Minimum (Button 1)"))
+        #expect(output.contains("Usage Maximum (Button 3)"))
+        #expect(output.contains("Logical Minimum (0)"))
+        #expect(output.contains("Logical Maximum (1)"))
+        #expect(output.contains("Report Count (3)"))
+        #expect(output.contains("Report Size (1)"))
+        #expect(output.contains("Input (Data, Variable, Absolute)"))
+        #expect(output.contains("Input (Constant)"))
+        #expect(output.contains("Usage (X)"))
+        #expect(output.contains("Usage (Y)"))
+        #expect(output.contains("Logical Minimum (-127)"))
+        #expect(output.contains("Logical Maximum (127)"))
+        #expect(output.contains("Input (Data, Variable, Relative)"))
+        #expect(output.contains("End Collection"))
     }
 }
 

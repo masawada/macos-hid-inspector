@@ -526,6 +526,52 @@ struct ReportDescriptorParserTests {
         }
     }
 
+    // MARK: - ParsedItems Tests
+
+    @Test("parse populates parsedItems with correct raw bytes")
+    func parseParsedItemsRawBytes() throws {
+        let data = Data([
+            0x05, 0x01,  // Usage Page (Generic Desktop)
+            0x09, 0x02,  // Usage (Mouse)
+            0xA1, 0x01,  // Collection (Application)
+            0xC0         // End Collection
+        ])
+        let parser = ReportDescriptorParser()
+        let descriptor = try parser.parse(data: data)
+
+        #expect(descriptor.parsedItems.count == 4)
+
+        #expect(descriptor.parsedItems[0].rawBytes == Data([0x05, 0x01]))
+        #expect(descriptor.parsedItems[0].item == .usagePage(0x01))
+
+        #expect(descriptor.parsedItems[1].rawBytes == Data([0x09, 0x02]))
+        #expect(descriptor.parsedItems[1].item == .usage(0x02))
+
+        #expect(descriptor.parsedItems[2].rawBytes == Data([0xA1, 0x01]))
+        #expect(descriptor.parsedItems[2].item == .collection(.application))
+
+        #expect(descriptor.parsedItems[3].rawBytes == Data([0xC0]))
+        #expect(descriptor.parsedItems[3].item == .endCollection)
+    }
+
+    @Test("parse empty data returns empty parsedItems")
+    func parseParsedItemsEmpty() throws {
+        let parser = ReportDescriptorParser()
+        let descriptor = try parser.parse(data: Data())
+        #expect(descriptor.parsedItems.isEmpty)
+    }
+
+    @Test("parsedItems captures multi-byte value raw bytes")
+    func parseParsedItemsMultiByte() throws {
+        // Usage Page (Vendor Defined) = 0x06 0x00 0xFF (2-byte value)
+        let data = Data([0x06, 0x00, 0xFF])
+        let parser = ReportDescriptorParser()
+        let descriptor = try parser.parse(data: data)
+
+        #expect(descriptor.parsedItems.count == 1)
+        #expect(descriptor.parsedItems[0].rawBytes == Data([0x06, 0x00, 0xFF]))
+    }
+
     // MARK: - Protocol Conformance Tests
 
     @Test("ReportDescriptorParser conforms to ReportDescriptorParserProtocol")
