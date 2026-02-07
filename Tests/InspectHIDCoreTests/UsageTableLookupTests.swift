@@ -142,11 +142,11 @@ struct UsageTableLookupTests {
         #expect(name == "Joystick")
     }
 
-    @Test("lookupUsageName returns Game Pad for Generic Desktop 0x05")
+    @Test("lookupUsageName returns Gamepad for Generic Desktop 0x05")
     func lookupUsageNameGamePad() {
         let lookup = UsageTableLookup()
         let name = lookup.lookupUsageName(page: 0x01, usage: 0x05)
-        #expect(name == "Game Pad")
+        #expect(name == "Gamepad")
     }
 
     @Test("lookupUsageName returns Keyboard for Generic Desktop 0x06")
