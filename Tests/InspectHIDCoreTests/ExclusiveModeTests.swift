@@ -25,10 +25,10 @@ struct ExclusiveModeTests {
             #expect(command.exclusive == false)
         }
 
-        @Test("MonitorCommand defaults to exclusive mode")
-        func defaultsToExclusive() throws {
+        @Test("MonitorCommand defaults to non-exclusive mode")
+        func defaultsToNonExclusive() throws {
             let command = try MonitorCommand.parse(["0"])
-            #expect(command.exclusive == true, "Should default to exclusive mode for reliable report capture")
+            #expect(command.exclusive == false, "Should default to non-exclusive (shared) mode")
         }
 
         @Test("MonitorCommand --exclusive works with --json")

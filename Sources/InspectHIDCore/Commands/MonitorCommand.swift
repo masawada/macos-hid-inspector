@@ -14,8 +14,8 @@ public struct MonitorCommand: ParsableCommand {
     @Flag(name: .long, help: "Output in JSON format")
     public var json: Bool = false
 
-    @Flag(name: .long, inversion: .prefixedNo, help: "Exclusive device access (default: true). Use --no-exclusive for shared access.")
-    public var exclusive: Bool = true
+    @Flag(name: .long, inversion: .prefixedNo, help: "Exclusive device access (default: false). Use --exclusive to seize device.")
+    public var exclusive: Bool = false
 
     public init() {}
 
