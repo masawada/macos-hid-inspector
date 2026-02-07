@@ -72,6 +72,80 @@ public enum TextFormatter {
         }
     }
 
+    // MARK: - Report Descriptor Formatting
+
+    /// Format a Report Descriptor with collection hierarchy
+    /// - Parameters:
+    ///   - collections: Collection tree from parsed descriptor
+    ///   - rawBytes: Raw descriptor bytes
+    ///   - usageLookup: Usage table lookup for name resolution
+    /// - Returns: Formatted string with collection hierarchy
+    public static func formatReportDescriptor(
+        collections: [CollectionNode],
+        rawBytes: Data,
+        usageLookup: UsageTableLookupProtocol
+    ) -> String {
+        if collections.isEmpty {
+            return "No collections found in Report Descriptor."
+        }
+
+        var lines: [String] = []
+        lines.append("Report Descriptor:")
+        lines.append(String(repeating: "-", count: 50))
+
+        for collection in collections {
+            formatCollection(collection, indent: 0, lines: &lines, usageLookup: usageLookup)
+        }
+
+        return lines.joined(separator: "\n")
+    }
+
+    /// Format a descriptor parse error with raw bytes fallback
+    /// - Parameters:
+    ///   - reason: Error reason description
+    ///   - rawBytes: Raw descriptor bytes
+    /// - Returns: Formatted error message with raw bytes
+    public static func formatDescriptorError(reason: String, rawBytes: Data) -> String {
+        var lines: [String] = []
+        lines.append("Error: \(reason)")
+        lines.append("")
+        lines.append("Raw descriptor bytes:")
+        lines.append(formatHexData(rawBytes))
+        return lines.joined(separator: "\n")
+    }
+
+    // MARK: - Private Collection Formatting
+
+    private static func formatCollection(
+        _ collection: CollectionNode,
+        indent: Int,
+        lines: inout [String],
+        usageLookup: UsageTableLookupProtocol
+    ) {
+        let prefix = String(repeating: "  ", count: indent)
+
+        // Collection header
+        lines.append("\(prefix)Collection (\(collection.type.name))")
+
+        // Usage Page
+        let pageName = usageLookup.lookupPageName(page: collection.usagePage)
+        lines.append("\(prefix)  Usage Page: \(pageName)")
+
+        // Usage
+        let usageName = usageLookup.lookupUsageName(
+            page: collection.usagePage,
+            usage: UInt16(collection.usage & 0xFFFF)
+        )
+        lines.append("\(prefix)  Usage: \(usageName)")
+
+        // Recursively format children
+        for child in collection.children {
+            formatCollection(child, indent: indent + 1, lines: &lines, usageLookup: usageLookup)
+        }
+
+        lines.append("\(prefix)End Collection")
+    }
+
     // MARK: - Error Formatting
 
     /// Format an InspectHIDError for stderr output

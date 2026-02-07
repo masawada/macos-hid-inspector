@@ -35,6 +35,28 @@ public enum JSONFormatter {
         let data: String
     }
 
+    /// JSON representation of ReportDescriptor
+    private struct ReportDescriptorJSON: Codable {
+        let collections: [CollectionJSON]
+        let rawBytes: String
+    }
+
+    /// JSON representation of CollectionNode
+    private struct CollectionJSON: Codable {
+        let usagePage: String
+        let usagePageName: String
+        let usage: String
+        let usageName: String
+        let type: String
+        let children: [CollectionJSON]
+    }
+
+    /// JSON representation of descriptor error
+    private struct DescriptorErrorJSON: Codable {
+        let error: String
+        let rawBytes: String
+    }
+
     // MARK: - Device List Formatting
 
     /// Format a list of HID devices as JSON
@@ -91,7 +113,61 @@ public enum JSONFormatter {
         return encodeToJSON(jsonReport)
     }
 
+    // MARK: - Report Descriptor Formatting
+
+    /// Format a Report Descriptor as JSON
+    /// - Parameters:
+    ///   - collections: Collection tree from parsed descriptor
+    ///   - rawBytes: Raw descriptor bytes
+    ///   - usageLookup: Usage table lookup for name resolution
+    /// - Returns: JSON string representation
+    public static func formatReportDescriptor(
+        collections: [CollectionNode],
+        rawBytes: Data,
+        usageLookup: UsageTableLookupProtocol
+    ) -> String {
+        let jsonCollections = collections.map { convertToJSON($0, usageLookup: usageLookup) }
+        let jsonDescriptor = ReportDescriptorJSON(
+            collections: jsonCollections,
+            rawBytes: formatHexData(rawBytes)
+        )
+        return encodeToJSON(jsonDescriptor)
+    }
+
+    /// Format a descriptor parse error as JSON
+    /// - Parameters:
+    ///   - reason: Error reason description
+    ///   - rawBytes: Raw descriptor bytes
+    /// - Returns: JSON string representation
+    public static func formatDescriptorError(reason: String, rawBytes: Data) -> String {
+        let jsonError = DescriptorErrorJSON(
+            error: reason,
+            rawBytes: formatHexData(rawBytes)
+        )
+        return encodeToJSON(jsonError)
+    }
+
     // MARK: - Private Helpers
+
+    private static func convertToJSON(
+        _ collection: CollectionNode,
+        usageLookup: UsageTableLookupProtocol
+    ) -> CollectionJSON {
+        let pageName = usageLookup.lookupPageName(page: collection.usagePage)
+        let usageName = usageLookup.lookupUsageName(
+            page: collection.usagePage,
+            usage: UInt16(collection.usage & 0xFFFF)
+        )
+
+        return CollectionJSON(
+            usagePage: String(format: "0x%04X", collection.usagePage),
+            usagePageName: pageName,
+            usage: String(format: "0x%04X", collection.usage),
+            usageName: usageName,
+            type: collection.type.name,
+            children: collection.children.map { convertToJSON($0, usageLookup: usageLookup) }
+        )
+    }
 
     private static func formatHex16(_ value: UInt16) -> String {
         return String(format: "0x%04x", value)
