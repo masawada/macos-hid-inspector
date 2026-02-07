@@ -39,8 +39,14 @@ public protocol IOKitHIDAdapterProtocol: Sendable {
 
     // MARK: - Device Monitoring
 
-    /// Open device for exclusive access
+    /// Open device for exclusive access (backwards compatibility)
     func open(_ device: any HIDDeviceHandle) throws
+
+    /// Open device with specified access mode
+    /// - Parameters:
+    ///   - device: Device to open
+    ///   - exclusive: If true, seize device for exclusive access. If false, open in shared mode.
+    func open(_ device: any HIDDeviceHandle, exclusive: Bool) throws
 
     /// Close device and release resources
     func close(_ device: any HIDDeviceHandle)

@@ -26,6 +26,14 @@ public protocol HIDDeviceServiceProtocol: Sendable {
     ///   - onDisconnect: Callback called when the device is disconnected
     func startMonitoring(specifier: DeviceSpecifier, onReport: @escaping (HIDReport) -> Void, onDisconnect: @escaping () -> Void) throws
 
+    /// Start monitoring HID reports with exclusive mode control
+    /// - Parameters:
+    ///   - specifier: Device to monitor
+    ///   - exclusive: If true, seize device for exclusive access. If false, open in shared mode.
+    ///   - onReport: Callback called when a report is received
+    ///   - onDisconnect: Callback called when the device is disconnected
+    func startMonitoring(specifier: DeviceSpecifier, exclusive: Bool, onReport: @escaping (HIDReport) -> Void, onDisconnect: @escaping () -> Void) throws
+
     /// Stop monitoring and release resources
     func stopMonitoring()
 

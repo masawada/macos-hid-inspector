@@ -108,7 +108,7 @@ public final class HIDDeviceService: HIDDeviceServiceProtocol, @unchecked Sendab
     /// Start monitoring HID reports from specified device
     /// Convenience method for backwards compatibility
     public func startMonitoring(specifier: DeviceSpecifier, onReport: @escaping (HIDReport) -> Void) throws {
-        try startMonitoring(specifier: specifier, onReport: onReport, onDisconnect: {})
+        try startMonitoring(specifier: specifier, exclusive: true, onReport: onReport, onDisconnect: {})
     }
 
     /// Start monitoring HID reports from specified device with disconnect handling
@@ -117,6 +117,16 @@ public final class HIDDeviceService: HIDDeviceServiceProtocol, @unchecked Sendab
     ///   - onReport: Callback called when a report is received
     ///   - onDisconnect: Callback called when the device is disconnected
     public func startMonitoring(specifier: DeviceSpecifier, onReport: @escaping (HIDReport) -> Void, onDisconnect: @escaping () -> Void) throws {
+        try startMonitoring(specifier: specifier, exclusive: true, onReport: onReport, onDisconnect: onDisconnect)
+    }
+
+    /// Start monitoring HID reports with exclusive mode control
+    /// - Parameters:
+    ///   - specifier: Device to monitor
+    ///   - exclusive: If true, seize device for exclusive access. If false, open in shared mode.
+    ///   - onReport: Callback called when a report is received
+    ///   - onDisconnect: Callback called when the device is disconnected
+    public func startMonitoring(specifier: DeviceSpecifier, exclusive: Bool, onReport: @escaping (HIDReport) -> Void, onDisconnect: @escaping () -> Void) throws {
         let devices = try adapter.enumerateDevices()
         let device = try resolveDevice(specifier: specifier, from: devices)
 
@@ -124,7 +134,7 @@ public final class HIDDeviceService: HIDDeviceServiceProtocol, @unchecked Sendab
         reportCallback = onReport
         disconnectCallback = onDisconnect
 
-        try adapter.open(device)
+        try adapter.open(device, exclusive: exclusive)
 
         adapter.registerInputReportCallbackWithId(device) { [weak self] reportId, data in
             guard let self = self, let callback = self.reportCallback else { return }

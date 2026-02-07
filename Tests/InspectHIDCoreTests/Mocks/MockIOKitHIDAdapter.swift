@@ -112,6 +112,10 @@ final class MockIOKitHIDAdapter: IOKitHIDAdapterProtocol, @unchecked Sendable {
     // MARK: - Monitoring Methods
 
     func open(_ device: any HIDDeviceHandle) throws {
+        try open(device, exclusive: true)
+    }
+
+    func open(_ device: any HIDDeviceHandle, exclusive: Bool) throws {
         guard let mock = device as? MockHIDDeviceHandle else {
             throw InspectHIDError.ioKitError(code: -1)
         }

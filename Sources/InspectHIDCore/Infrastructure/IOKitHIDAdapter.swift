@@ -130,13 +130,22 @@ public final class IOKitHIDAdapter: IOKitHIDAdapterProtocol, @unchecked Sendable
 
     // MARK: - Device Monitoring
 
-    /// Open device for exclusive access
+    /// Open device for exclusive access (backwards compatibility)
     public func open(_ device: any HIDDeviceHandle) throws {
+        try open(device, exclusive: true)
+    }
+
+    /// Open device with specified access mode
+    /// - Parameters:
+    ///   - device: Device to open
+    ///   - exclusive: If true, seize device for exclusive access. If false, open in shared mode.
+    public func open(_ device: any HIDDeviceHandle, exclusive: Bool) throws {
         guard let ioDevice = (device as? IOHIDDeviceHandle)?.device else {
             throw InspectHIDError.ioKitError(code: -1)
         }
 
-        let result = IOHIDDeviceOpen(ioDevice, IOOptionBits(kIOHIDOptionsTypeSeizeDevice))
+        let options = exclusive ? IOOptionBits(kIOHIDOptionsTypeSeizeDevice) : IOOptionBits(kIOHIDOptionsTypeNone)
+        let result = IOHIDDeviceOpen(ioDevice, options)
         guard result == kIOReturnSuccess else {
             throw IOKitErrorMapper.mapToInspectHIDError(code: result)
         }

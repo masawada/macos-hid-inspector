@@ -14,6 +14,9 @@ public struct MonitorCommand: ParsableCommand {
     @Flag(name: .long, help: "Output in JSON format")
     public var json: Bool = false
 
+    @Flag(name: .long, inversion: .prefixedNo, help: "Exclusive device access (default: true). Use --no-exclusive for shared access.")
+    public var exclusive: Bool = true
+
     public init() {}
 
     public mutating func run() throws {
@@ -30,6 +33,7 @@ public struct MonitorCommand: ParsableCommand {
         }
 
         let outputJson = json
+        let useExclusive = exclusive
 
         // Set up signal handler for Ctrl+C
         SignalHandler.shared.onInterrupt {
@@ -40,6 +44,7 @@ public struct MonitorCommand: ParsableCommand {
         do {
             try service.startMonitoring(
                 specifier: specifier,
+                exclusive: useExclusive,
                 onReport: { report in
                     let output: String
                     if outputJson {

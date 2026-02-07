@@ -307,6 +307,7 @@ final class MockIOKitHIDAdapterWithErrors: IOKitHIDAdapterProtocol, @unchecked S
     // MARK: - Monitoring Methods
 
     func open(_ device: any HIDDeviceHandle) throws { throw error }
+    func open(_ device: any HIDDeviceHandle, exclusive: Bool) throws { throw error }
     func close(_ device: any HIDDeviceHandle) {}
     func registerInputReportCallbackWithId(_ device: any HIDDeviceHandle, callback: @escaping (Int, Data) -> Void) {}
     func registerRemovalCallback(_ device: any HIDDeviceHandle, callback: @escaping () -> Void) {}
