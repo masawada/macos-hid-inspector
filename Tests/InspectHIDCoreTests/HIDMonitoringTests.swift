@@ -245,4 +245,131 @@ struct HIDMonitoringTests {
             try service.startMonitoring(specifier: .index(0)) { _ in }
         }
     }
+
+    // MARK: - Device Removal Detection Tests
+
+    @Test("Removal callback is registered when monitoring starts")
+    func removalCallbackRegisteredOnMonitoring() throws {
+        let device = MockHIDDeviceHandle(
+            vendorId: 0x1234,
+            productId: 0x5678,
+            productName: "Test Device",
+            manufacturer: "Test",
+            serialNumber: nil
+        )
+        let adapter = MockIOKitHIDAdapter(devices: [device])
+        let service = HIDDeviceService(adapter: adapter)
+
+        try service.startMonitoring(specifier: .index(0)) { _ in }
+
+        // Verify removal callback was registered by checking if we can trigger it
+        #expect(adapter.hasRemovalCallback(for: device))
+    }
+
+    @Test("Device disconnection invokes onDisconnect callback")
+    func deviceDisconnectionInvokesCallback() throws {
+        let device = MockHIDDeviceHandle(
+            vendorId: 0x1234,
+            productId: 0x5678,
+            productName: "Test Device",
+            manufacturer: "Test",
+            serialNumber: nil
+        )
+        let adapter = MockIOKitHIDAdapter(devices: [device])
+        let service = HIDDeviceService(adapter: adapter)
+
+        var disconnectCalled = false
+
+        try service.startMonitoring(
+            specifier: .index(0),
+            onReport: { _ in },
+            onDisconnect: { disconnectCalled = true }
+        )
+
+        adapter.simulateDeviceRemoval(for: device)
+
+        #expect(disconnectCalled)
+    }
+
+    @Test("Device disconnection stops monitoring and cleans up resources")
+    func deviceDisconnectionStopsMonitoring() throws {
+        let device = MockHIDDeviceHandle(
+            vendorId: 0x1234,
+            productId: 0x5678,
+            productName: "Test Device",
+            manufacturer: "Test",
+            serialNumber: nil
+        )
+        let adapter = MockIOKitHIDAdapter(devices: [device])
+        let service = HIDDeviceService(adapter: adapter)
+
+        var receivedReports: [HIDReport] = []
+
+        try service.startMonitoring(
+            specifier: .index(0),
+            onReport: { report in receivedReports.append(report) },
+            onDisconnect: { }
+        )
+
+        // Simulate device removal
+        adapter.simulateDeviceRemoval(for: device)
+
+        // Reports after disconnect should not be received
+        let testData = Data([0x01, 0x02, 0x03])
+        adapter.simulateInputReport(for: device, data: testData)
+
+        #expect(receivedReports.isEmpty)
+    }
+
+    @Test("Device is closed after disconnection")
+    func deviceClosedAfterDisconnection() throws {
+        let device = MockHIDDeviceHandle(
+            vendorId: 0x1234,
+            productId: 0x5678,
+            productName: "Test Device",
+            manufacturer: "Test",
+            serialNumber: nil
+        )
+        let adapter = MockIOKitHIDAdapter(devices: [device])
+        let service = HIDDeviceService(adapter: adapter)
+
+        try service.startMonitoring(
+            specifier: .index(0),
+            onReport: { _ in },
+            onDisconnect: { }
+        )
+
+        // Device should be open
+        #expect(adapter.openedDevices.contains { $0 === device })
+
+        adapter.simulateDeviceRemoval(for: device)
+
+        // Device should be closed
+        #expect(!adapter.openedDevices.contains { $0 === device })
+    }
+
+    @Test("Backwards compatible: startMonitoring without onDisconnect still works")
+    func backwardsCompatibleMonitoringWithoutDisconnectCallback() throws {
+        let device = MockHIDDeviceHandle(
+            vendorId: 0x1234,
+            productId: 0x5678,
+            productName: "Test Device",
+            manufacturer: "Test",
+            serialNumber: nil
+        )
+        let adapter = MockIOKitHIDAdapter(devices: [device])
+        let service = HIDDeviceService(adapter: adapter)
+
+        var receivedReports: [HIDReport] = []
+
+        // Use existing single-argument API
+        try service.startMonitoring(specifier: .index(0)) { report in
+            receivedReports.append(report)
+        }
+
+        let testData = Data([0x01, 0x02])
+        adapter.simulateInputReport(for: device, data: testData)
+
+        #expect(receivedReports.count == 1)
+    }
 }

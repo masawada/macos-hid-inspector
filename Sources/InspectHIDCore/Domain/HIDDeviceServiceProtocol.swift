@@ -19,6 +19,13 @@ public protocol HIDDeviceServiceProtocol: Sendable {
     ///   - onReport: Callback called when a report is received
     func startMonitoring(specifier: DeviceSpecifier, onReport: @escaping (HIDReport) -> Void) throws
 
+    /// Start monitoring HID reports from specified device with disconnect handling
+    /// - Parameters:
+    ///   - specifier: Device to monitor
+    ///   - onReport: Callback called when a report is received
+    ///   - onDisconnect: Callback called when the device is disconnected
+    func startMonitoring(specifier: DeviceSpecifier, onReport: @escaping (HIDReport) -> Void, onDisconnect: @escaping () -> Void) throws
+
     /// Stop monitoring and release resources
     func stopMonitoring()
 }

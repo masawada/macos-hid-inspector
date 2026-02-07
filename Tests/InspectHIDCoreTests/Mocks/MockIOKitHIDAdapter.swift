@@ -161,4 +161,9 @@ final class MockIOKitHIDAdapter: IOKitHIDAdapterProtocol, @unchecked Sendable {
         let id = ObjectIdentifier(device)
         removalCallbacks[id]?()
     }
+
+    func hasRemovalCallback(for device: MockHIDDeviceHandle) -> Bool {
+        let id = ObjectIdentifier(device)
+        return removalCallbacks[id] != nil
+    }
 }

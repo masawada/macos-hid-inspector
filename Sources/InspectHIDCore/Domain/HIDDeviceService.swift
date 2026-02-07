@@ -7,6 +7,7 @@ public final class HIDDeviceService: HIDDeviceServiceProtocol, @unchecked Sendab
     // MARK: - Monitoring State
     private var currentMonitoringDevice: (any HIDDeviceHandle)?
     private var reportCallback: ((HIDReport) -> Void)?
+    private var disconnectCallback: (() -> Void)?
 
     public init(adapter: any IOKitHIDAdapterProtocol = IOKitHIDAdapter()) {
         self.adapter = adapter
@@ -105,12 +106,23 @@ public final class HIDDeviceService: HIDDeviceServiceProtocol, @unchecked Sendab
     // MARK: - Monitoring
 
     /// Start monitoring HID reports from specified device
+    /// Convenience method for backwards compatibility
     public func startMonitoring(specifier: DeviceSpecifier, onReport: @escaping (HIDReport) -> Void) throws {
+        try startMonitoring(specifier: specifier, onReport: onReport, onDisconnect: {})
+    }
+
+    /// Start monitoring HID reports from specified device with disconnect handling
+    /// - Parameters:
+    ///   - specifier: Device to monitor
+    ///   - onReport: Callback called when a report is received
+    ///   - onDisconnect: Callback called when the device is disconnected
+    public func startMonitoring(specifier: DeviceSpecifier, onReport: @escaping (HIDReport) -> Void, onDisconnect: @escaping () -> Void) throws {
         let devices = try adapter.enumerateDevices()
         let device = try resolveDevice(specifier: specifier, from: devices)
 
         currentMonitoringDevice = device
         reportCallback = onReport
+        disconnectCallback = onDisconnect
 
         try adapter.open(device)
 
@@ -124,6 +136,14 @@ public final class HIDDeviceService: HIDDeviceServiceProtocol, @unchecked Sendab
             )
             callback(report)
         }
+
+        // Register removal callback for device disconnection detection
+        adapter.registerRemovalCallback(device) { [weak self] in
+            guard let self = self else { return }
+            let callback = self.disconnectCallback
+            self.stopMonitoring()
+            callback?()
+        }
     }
 
     /// Stop monitoring and release resources
@@ -133,5 +153,6 @@ public final class HIDDeviceService: HIDDeviceServiceProtocol, @unchecked Sendab
         }
         currentMonitoringDevice = nil
         reportCallback = nil
+        disconnectCallback = nil
     }
 }
