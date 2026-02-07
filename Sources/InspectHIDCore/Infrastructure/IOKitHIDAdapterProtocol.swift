@@ -19,4 +19,21 @@ public protocol IOKitHIDAdapterProtocol: Sendable {
 
     /// Get Serial Number from device
     func getSerialNumber(_ device: any HIDDeviceHandle) -> String?
+
+    // MARK: - Device Descriptor Properties
+
+    /// Get USB Device Class from device
+    func getDeviceClass(_ device: any HIDDeviceHandle) -> UInt8?
+
+    /// Get USB Device Subclass from device
+    func getDeviceSubClass(_ device: any HIDDeviceHandle) -> UInt8?
+
+    /// Get USB Device Protocol from device
+    func getDeviceProtocol(_ device: any HIDDeviceHandle) -> UInt8?
+
+    /// Get device version number (bcdDevice) from device
+    func getVersionNumber(_ device: any HIDDeviceHandle) -> UInt16?
+
+    /// Get HID Report Descriptor raw bytes from device
+    func getReportDescriptor(_ device: any HIDDeviceHandle) -> Data?
 }

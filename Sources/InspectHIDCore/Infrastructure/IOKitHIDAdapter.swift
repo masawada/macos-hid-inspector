@@ -73,6 +73,53 @@ public final class IOKitHIDAdapter: IOKitHIDAdapterProtocol, @unchecked Sendable
         return getStringProperty(ioDevice, key: kIOHIDSerialNumberKey)
     }
 
+    // MARK: - Device Descriptor Properties
+
+    /// Get USB Device Class from IOHIDDevice
+    /// Note: HID devices typically have device class 0 (defined at interface level)
+    public func getDeviceClass(_ device: any HIDDeviceHandle) -> UInt8? {
+        guard let ioDevice = (device as? IOHIDDeviceHandle)?.device else {
+            return nil
+        }
+        return getIntProperty(ioDevice, key: kIOHIDDeviceUsagePageKey).map { UInt8(clamping: $0) }
+    }
+
+    /// Get USB Device Subclass from IOHIDDevice
+    public func getDeviceSubClass(_ device: any HIDDeviceHandle) -> UInt8? {
+        guard let ioDevice = (device as? IOHIDDeviceHandle)?.device else {
+            return nil
+        }
+        return getIntProperty(ioDevice, key: kIOHIDDeviceUsageKey).map { UInt8(clamping: $0) }
+    }
+
+    /// Get USB Device Protocol from IOHIDDevice
+    public func getDeviceProtocol(_ device: any HIDDeviceHandle) -> UInt8? {
+        guard let ioDevice = (device as? IOHIDDeviceHandle)?.device else {
+            return nil
+        }
+        // HID devices use primary usage page as protocol indicator
+        return getIntProperty(ioDevice, key: kIOHIDPrimaryUsagePageKey).map { UInt8(clamping: $0) }
+    }
+
+    /// Get device version number from IOHIDDevice
+    public func getVersionNumber(_ device: any HIDDeviceHandle) -> UInt16? {
+        guard let ioDevice = (device as? IOHIDDeviceHandle)?.device else {
+            return nil
+        }
+        return getIntProperty(ioDevice, key: kIOHIDVersionNumberKey).map { UInt16(clamping: $0) }
+    }
+
+    /// Get HID Report Descriptor from IOHIDDevice
+    public func getReportDescriptor(_ device: any HIDDeviceHandle) -> Data? {
+        guard let ioDevice = (device as? IOHIDDeviceHandle)?.device else {
+            return nil
+        }
+        guard let value = IOHIDDeviceGetProperty(ioDevice, kIOHIDReportDescriptorKey as CFString) else {
+            return nil
+        }
+        return value as? Data
+    }
+
     // MARK: - Private Helpers
 
     private func getIntProperty(_ device: IOHIDDevice, key: String) -> Int? {
