@@ -39,13 +39,15 @@ public final class IOKitHIDAdapter: IOKitHIDAdapterProtocol, @unchecked Sendable
 
         // Sort devices by location ID to ensure consistent ordering across runs
         // (Set iteration order is non-deterministic)
+        // A single physical device can expose multiple HID interfaces (e.g., keyboard + media keys)
+        // sharing the same location/vendor/product IDs, so we also sort by usage page and usage
+        // to guarantee a total order.
         let sortedDevices = (deviceSet as! Set<IOHIDDevice>).sorted { device1, device2 in
             let locationId1 = getIntProperty(device1, key: kIOHIDLocationIDKey) ?? 0
             let locationId2 = getIntProperty(device2, key: kIOHIDLocationIDKey) ?? 0
             if locationId1 != locationId2 {
                 return locationId1 < locationId2
             }
-            // Secondary sort by vendor ID, then product ID for stability
             let vendorId1 = getIntProperty(device1, key: kIOHIDVendorIDKey) ?? 0
             let vendorId2 = getIntProperty(device2, key: kIOHIDVendorIDKey) ?? 0
             if vendorId1 != vendorId2 {
@@ -53,7 +55,18 @@ public final class IOKitHIDAdapter: IOKitHIDAdapterProtocol, @unchecked Sendable
             }
             let productId1 = getIntProperty(device1, key: kIOHIDProductIDKey) ?? 0
             let productId2 = getIntProperty(device2, key: kIOHIDProductIDKey) ?? 0
-            return productId1 < productId2
+            if productId1 != productId2 {
+                return productId1 < productId2
+            }
+            // Break ties for multiple interfaces of the same physical device
+            let usagePage1 = getIntProperty(device1, key: kIOHIDPrimaryUsagePageKey) ?? 0
+            let usagePage2 = getIntProperty(device2, key: kIOHIDPrimaryUsagePageKey) ?? 0
+            if usagePage1 != usagePage2 {
+                return usagePage1 < usagePage2
+            }
+            let usage1 = getIntProperty(device1, key: kIOHIDPrimaryUsageKey) ?? 0
+            let usage2 = getIntProperty(device2, key: kIOHIDPrimaryUsageKey) ?? 0
+            return usage1 < usage2
         }
 
         let devices = sortedDevices.map { IOHIDDeviceHandle(device: $0) }
