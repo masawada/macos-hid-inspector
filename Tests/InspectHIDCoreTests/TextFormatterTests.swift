@@ -214,6 +214,42 @@ struct TextFormatterTests {
         #expect(result.contains("System Settings") || result.contains("Privacy"))
     }
 
+    @Test("Invalid device specifier error formatting")
+    func formatError_invalidDeviceSpecifier() {
+        let error = InspectHIDError.invalidDeviceSpecifier(input: "xyz")
+        let formatted = TextFormatter.formatError(error)
+        #expect(formatted.contains("Error:"))
+        #expect(formatted.contains("xyz"))
+    }
+
+    @Test("Device disconnected error formatting")
+    func formatError_deviceDisconnected() {
+        let error = InspectHIDError.deviceDisconnected
+        let formatted = TextFormatter.formatError(error)
+        #expect(formatted.contains("Error:"))
+        #expect(formatted.contains("disconnected"))
+    }
+
+    @Test("Descriptor error formatting with raw bytes")
+    func formatDescriptorError_withRawBytes() {
+        let rawBytes = Data([0x05, 0x01, 0x09, 0x02])
+        let output = TextFormatter.formatDescriptorError(reason: "Parse failed", rawBytes: rawBytes)
+        #expect(output.contains("Parse failed"))
+        #expect(output.contains("05"))
+        #expect(output.contains("Raw descriptor bytes"))
+    }
+
+    @Test("Generic Error formatting")
+    func formatError_genericError() {
+        struct CustomError: Error, LocalizedError {
+            var errorDescription: String? { "Custom error message" }
+        }
+        let error = CustomError()
+        let formatted = TextFormatter.formatError(error)
+        #expect(formatted.contains("Error:"))
+        #expect(formatted.contains("Custom error message"))
+    }
+
     // MARK: - Formatting Style Tests
 
     @Test("Device list has aligned columns")

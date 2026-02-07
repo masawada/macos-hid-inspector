@@ -52,6 +52,75 @@ struct ErrorHandlingTests {
             let error = InspectHIDError.invalidDeviceSpecifier(input: "invalid")
             #expect(error.exitCode == 1)
         }
+
+        @Test("deviceNotFound error includes specifier in message")
+        func deviceNotFoundIncludesSpecifier() {
+            let error = InspectHIDError.deviceNotFound(specifier: "0")
+            let description = error.errorDescription ?? ""
+            #expect(description.contains("0"), "Error message should include the specifier")
+        }
+
+        @Test("ambiguousDevice error includes count in message")
+        func ambiguousDeviceIncludesCount() {
+            let error = InspectHIDError.ambiguousDevice(count: 3)
+            let description = error.errorDescription ?? ""
+            #expect(description.contains("3"), "Should include device count")
+            #expect(description.contains("Multiple"), "Should mention multiple devices")
+        }
+
+        @Test("reportDescriptorNotAvailable has exit code 1")
+        func reportDescriptorNotAvailableExitCode() {
+            let error = InspectHIDError.reportDescriptorNotAvailable
+            #expect(error.exitCode == 1)
+        }
+
+        @Test("descriptorParseFailed has exit code 1")
+        func descriptorParseFailedExitCode() {
+            let error = InspectHIDError.descriptorParseFailed(reason: "Invalid format")
+            #expect(error.exitCode == 1)
+        }
+
+        @Test("descriptorParseFailed includes reason in message")
+        func descriptorParseFailedIncludesReason() {
+            let reason = "Unexpected tag at offset 5"
+            let error = InspectHIDError.descriptorParseFailed(reason: reason)
+            let description = error.errorDescription ?? ""
+            #expect(description.contains(reason), "Should include reason in message")
+        }
+
+        @Test("All error types have appropriate exit codes")
+        func allErrorTypesHaveExitCodes() {
+            #expect(InspectHIDError.deviceNotFound(specifier: "0").exitCode == 1)
+            #expect(InspectHIDError.invalidDeviceSpecifier(input: "bad").exitCode == 1)
+            #expect(InspectHIDError.ambiguousDevice(count: 2).exitCode == 1)
+            #expect(InspectHIDError.permissionDenied(device: "test").exitCode == 2)
+            #expect(InspectHIDError.deviceDisconnected.exitCode == 3)
+            #expect(InspectHIDError.ioKitError(code: -1).exitCode == 1)
+            #expect(InspectHIDError.reportDescriptorNotAvailable.exitCode == 1)
+            #expect(InspectHIDError.descriptorParseFailed(reason: "test").exitCode == 1)
+        }
+
+        @Test("InspectHIDError conforms to Equatable")
+        func inspectHIDErrorIsEquatable() {
+            let error1 = InspectHIDError.deviceNotFound(specifier: "0")
+            let error2 = InspectHIDError.deviceNotFound(specifier: "0")
+            let error3 = InspectHIDError.deviceNotFound(specifier: "1")
+
+            #expect(error1 == error2, "Same errors should be equal")
+            #expect(error1 != error3, "Different specifiers should not be equal")
+        }
+
+        @Test("InspectHIDError conforms to Sendable")
+        func inspectHIDErrorIsSendable() {
+            let error: any Sendable = InspectHIDError.deviceNotFound(specifier: "0")
+            #expect(error is InspectHIDError)
+        }
+
+        @Test("InspectHIDError conforms to LocalizedError")
+        func inspectHIDErrorIsLocalizedError() {
+            let error: any LocalizedError = InspectHIDError.deviceNotFound(specifier: "test")
+            #expect(error.errorDescription != nil, "Should have errorDescription")
+        }
     }
 
     // MARK: - IOKitHIDAdapter Error Handling Tests
@@ -144,6 +213,70 @@ struct ErrorHandlingTests {
             } else {
                 Issue.record("Unexpected error type")
             }
+        }
+
+        @Test("IOKitErrorMapper maps kIOReturnNotPermitted to permissionDenied")
+        func mapperMapsNotPermittedToPermissionDenied() {
+            let error = IOKitErrorMapper.mapToInspectHIDError(code: IOKitErrorMapper.kIOReturnNotPermitted)
+            if case .permissionDenied = error {
+                #expect(error.exitCode == 2)
+            } else {
+                Issue.record("Should map to permissionDenied")
+            }
+        }
+
+        @Test("IOKitErrorMapper maps kIOReturnNotPrivileged to permissionDenied")
+        func mapperMapsNotPrivilegedToPermissionDenied() {
+            let error = IOKitErrorMapper.mapToInspectHIDError(code: IOKitErrorMapper.kIOReturnNotPrivileged)
+            if case .permissionDenied = error {
+                #expect(error.exitCode == 2)
+            } else {
+                Issue.record("Should map to permissionDenied")
+            }
+        }
+
+        @Test("IOKitErrorMapper maps kIOReturnExclusiveAccess to permissionDenied")
+        func mapperMapsExclusiveAccessToPermissionDenied() {
+            let error = IOKitErrorMapper.mapToInspectHIDError(code: IOKitErrorMapper.kIOReturnExclusiveAccess)
+            if case .permissionDenied = error {
+                #expect(error.exitCode == 2)
+            } else {
+                Issue.record("Should map to permissionDenied")
+            }
+        }
+
+        @Test("IOKitErrorMapper maps kIOReturnNoDevice to deviceDisconnected")
+        func mapperMapsNoDeviceToDisconnected() {
+            let error = IOKitErrorMapper.mapToInspectHIDError(code: IOKitErrorMapper.kIOReturnNoDevice)
+            if case .deviceDisconnected = error {
+                #expect(error.exitCode == 3)
+            } else {
+                Issue.record("Should map to deviceDisconnected")
+            }
+        }
+
+        @Test("IOKitErrorMapper maps kIOReturnNotAttached to deviceDisconnected")
+        func mapperMapsNotAttachedToDisconnected() {
+            let error = IOKitErrorMapper.mapToInspectHIDError(code: IOKitErrorMapper.kIOReturnNotAttached)
+            if case .deviceDisconnected = error {
+                #expect(error.exitCode == 3)
+            } else {
+                Issue.record("Should map to deviceDisconnected")
+            }
+        }
+
+        @Test("IOKitErrorMapper.isPermissionError returns true for permission codes")
+        func isPermissionErrorReturnsTrueForPermissionCodes() {
+            #expect(IOKitErrorMapper.isPermissionError(IOKitErrorMapper.kIOReturnNotPermitted))
+            #expect(IOKitErrorMapper.isPermissionError(IOKitErrorMapper.kIOReturnNotPrivileged))
+            #expect(IOKitErrorMapper.isPermissionError(IOKitErrorMapper.kIOReturnExclusiveAccess))
+        }
+
+        @Test("IOKitErrorMapper.isPermissionError returns false for other codes")
+        func isPermissionErrorReturnsFalseForOtherCodes() {
+            #expect(!IOKitErrorMapper.isPermissionError(IOKitErrorMapper.kIOReturnSuccess))
+            #expect(!IOKitErrorMapper.isPermissionError(IOKitErrorMapper.kIOReturnBadArgument))
+            #expect(!IOKitErrorMapper.isPermissionError(-12345))
         }
     }
 }
