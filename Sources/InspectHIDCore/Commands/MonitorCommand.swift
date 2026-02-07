@@ -1,4 +1,5 @@
 import ArgumentParser
+import Foundation
 
 /// Monitors and displays real-time HID reports from a specified device.
 public struct MonitorCommand: ParsableCommand {
@@ -16,6 +17,61 @@ public struct MonitorCommand: ParsableCommand {
     public init() {}
 
     public mutating func run() throws {
-        print("monitor command executed for device: \(device) (stub)")
+        let selector = DeviceSelector()
+        let service = HIDDeviceService()
+
+        // Parse device specifier
+        let specifier: DeviceSpecifier
+        do {
+            specifier = try selector.parse(input: device)
+        } catch let error as InspectHIDError {
+            FileHandle.standardError.write(Data((TextFormatter.formatError(error) + "\n").utf8))
+            throw ExitCode(error.exitCode)
+        }
+
+        let outputJson = json
+
+        // Set up signal handler for Ctrl+C
+        SignalHandler.shared.onInterrupt {
+            service.stopRunLoop()
+        }
+
+        // Start monitoring
+        do {
+            try service.startMonitoring(
+                specifier: specifier,
+                onReport: { report in
+                    let output: String
+                    if outputJson {
+                        output = JSONFormatter.formatHIDReport(report)
+                    } else {
+                        output = TextFormatter.formatHIDReport(report)
+                    }
+                    print(output)
+                    fflush(stdout)
+                },
+                onDisconnect: {
+                    let message = "Device disconnected."
+                    if outputJson {
+                        print("{\"event\":\"disconnected\",\"message\":\"\(message)\"}")
+                    } else {
+                        print(message)
+                    }
+                    service.stopRunLoop()
+                }
+            )
+
+            // Run the event loop (blocks until stopped)
+            service.runLoop()
+
+            // Clean up after run loop exits
+            service.stopMonitoring()
+            SignalHandler.shared.unregister()
+
+        } catch let error as InspectHIDError {
+            SignalHandler.shared.unregister()
+            FileHandle.standardError.write(Data((TextFormatter.formatError(error) + "\n").utf8))
+            throw ExitCode(error.exitCode)
+        }
     }
 }
