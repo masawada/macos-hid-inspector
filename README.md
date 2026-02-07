@@ -12,7 +12,7 @@ A command-line tool for inspecting and monitoring Human Interface Devices (HID) 
 
 ## Requirements
 
-- macOS 14.0+
+- macOS 15.0+
 - Swift 6.0+
 - Input Monitoring permission (System Settings > Privacy & Security > Input Monitoring)
 

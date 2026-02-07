@@ -5,7 +5,7 @@ import PackageDescription
 let package = Package(
     name: "macos-hid-inspector",
     platforms: [
-        .macOS(.v14)
+        .macOS(.v15)
     ],
     products: [
         .executable(name: "inspect-hid", targets: ["InspectHID"]),
