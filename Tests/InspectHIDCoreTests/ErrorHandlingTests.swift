@@ -170,4 +170,13 @@ final class MockIOKitHIDAdapterWithErrors: IOKitHIDAdapterProtocol, @unchecked S
     func getDeviceProtocol(_ device: any HIDDeviceHandle) -> UInt8? { nil }
     func getVersionNumber(_ device: any HIDDeviceHandle) -> UInt16? { nil }
     func getReportDescriptor(_ device: any HIDDeviceHandle) -> Data? { nil }
+
+    // MARK: - Monitoring Methods
+
+    func open(_ device: any HIDDeviceHandle) throws { throw error }
+    func close(_ device: any HIDDeviceHandle) {}
+    func registerInputReportCallbackWithId(_ device: any HIDDeviceHandle, callback: @escaping (Int, Data) -> Void) {}
+    func registerRemovalCallback(_ device: any HIDDeviceHandle, callback: @escaping () -> Void) {}
+    func runLoop() {}
+    func stopRunLoop() {}
 }

@@ -36,4 +36,24 @@ public protocol IOKitHIDAdapterProtocol: Sendable {
 
     /// Get HID Report Descriptor raw bytes from device
     func getReportDescriptor(_ device: any HIDDeviceHandle) -> Data?
+
+    // MARK: - Device Monitoring
+
+    /// Open device for exclusive access
+    func open(_ device: any HIDDeviceHandle) throws
+
+    /// Close device and release resources
+    func close(_ device: any HIDDeviceHandle)
+
+    /// Register callback for input reports with report ID
+    func registerInputReportCallbackWithId(_ device: any HIDDeviceHandle, callback: @escaping (Int, Data) -> Void)
+
+    /// Register callback for device removal
+    func registerRemovalCallback(_ device: any HIDDeviceHandle, callback: @escaping () -> Void)
+
+    /// Run the event loop for receiving reports
+    func runLoop()
+
+    /// Stop the event loop
+    func stopRunLoop()
 }

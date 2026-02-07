@@ -44,6 +44,9 @@ final class MockHIDDeviceHandle: HIDDeviceHandle, @unchecked Sendable {
 /// Mock IOKit HID adapter for testing
 final class MockIOKitHIDAdapter: IOKitHIDAdapterProtocol, @unchecked Sendable {
     private let devices: [MockHIDDeviceHandle]
+    private(set) var openedDevices: [MockHIDDeviceHandle] = []
+    private var inputCallbacksWithId: [ObjectIdentifier: (Int, Data) -> Void] = [:]
+    private var removalCallbacks: [ObjectIdentifier: () -> Void] = [:]
 
     init(devices: [MockHIDDeviceHandle]) {
         self.devices = devices
@@ -103,5 +106,59 @@ final class MockIOKitHIDAdapter: IOKitHIDAdapterProtocol, @unchecked Sendable {
     func getReportDescriptor(_ device: any HIDDeviceHandle) -> Data? {
         guard let mock = device as? MockHIDDeviceHandle else { return nil }
         return mock.reportDescriptor
+    }
+
+    // MARK: - Monitoring Methods
+
+    func open(_ device: any HIDDeviceHandle) throws {
+        guard let mock = device as? MockHIDDeviceHandle else {
+            throw InspectHIDError.ioKitError(code: -1)
+        }
+        openedDevices.append(mock)
+    }
+
+    func close(_ device: any HIDDeviceHandle) {
+        guard let mock = device as? MockHIDDeviceHandle else { return }
+        openedDevices.removeAll { $0 === mock }
+        let id = ObjectIdentifier(mock)
+        inputCallbacksWithId.removeValue(forKey: id)
+        removalCallbacks.removeValue(forKey: id)
+    }
+
+    func registerInputReportCallbackWithId(_ device: any HIDDeviceHandle, callback: @escaping (Int, Data) -> Void) {
+        guard let mock = device as? MockHIDDeviceHandle else { return }
+        let id = ObjectIdentifier(mock)
+        inputCallbacksWithId[id] = callback
+    }
+
+    func registerRemovalCallback(_ device: any HIDDeviceHandle, callback: @escaping () -> Void) {
+        guard let mock = device as? MockHIDDeviceHandle else { return }
+        let id = ObjectIdentifier(mock)
+        removalCallbacks[id] = callback
+    }
+
+    func runLoop() {
+        // No-op for testing
+    }
+
+    func stopRunLoop() {
+        // No-op for testing
+    }
+
+    // MARK: - Test Helpers
+
+    func simulateInputReport(for device: MockHIDDeviceHandle, data: Data) {
+        let id = ObjectIdentifier(device)
+        inputCallbacksWithId[id]?(0, data)
+    }
+
+    func simulateInputReportWithId(for device: MockHIDDeviceHandle, reportId: Int, data: Data) {
+        let id = ObjectIdentifier(device)
+        inputCallbacksWithId[id]?(reportId, data)
+    }
+
+    func simulateDeviceRemoval(for device: MockHIDDeviceHandle) {
+        let id = ObjectIdentifier(device)
+        removalCallbacks[id]?()
     }
 }

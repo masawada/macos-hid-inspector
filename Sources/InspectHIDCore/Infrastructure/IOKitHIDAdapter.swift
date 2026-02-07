@@ -4,6 +4,13 @@ import IOKit.hid
 /// IOKit HID adapter for accessing USB HID devices
 public final class IOKitHIDAdapter: IOKitHIDAdapterProtocol, @unchecked Sendable {
 
+    // MARK: - Monitoring State
+
+    private var inputReportBuffer = [UInt8](repeating: 0, count: 1024)
+    private var inputReportCallbackWithId: ((Int, Data) -> Void)?
+    private var removalCallback: (() -> Void)?
+    private var currentRunLoop: CFRunLoop?
+
     public init() {}
 
     /// Enumerate all connected HID devices using IOHIDManager
@@ -119,6 +126,96 @@ public final class IOKitHIDAdapter: IOKitHIDAdapterProtocol, @unchecked Sendable
             return nil
         }
         return value as? Data
+    }
+
+    // MARK: - Device Monitoring
+
+    /// Open device for exclusive access
+    public func open(_ device: any HIDDeviceHandle) throws {
+        guard let ioDevice = (device as? IOHIDDeviceHandle)?.device else {
+            throw InspectHIDError.ioKitError(code: -1)
+        }
+
+        let result = IOHIDDeviceOpen(ioDevice, IOOptionBits(kIOHIDOptionsTypeSeizeDevice))
+        guard result == kIOReturnSuccess else {
+            throw IOKitErrorMapper.mapToInspectHIDError(code: result)
+        }
+    }
+
+    /// Close device and release resources
+    public func close(_ device: any HIDDeviceHandle) {
+        guard let ioDevice = (device as? IOHIDDeviceHandle)?.device else {
+            return
+        }
+        IOHIDDeviceClose(ioDevice, IOOptionBits(kIOHIDOptionsTypeNone))
+        inputReportCallbackWithId = nil
+        removalCallback = nil
+    }
+
+    /// Register callback for input reports with report ID
+    public func registerInputReportCallbackWithId(_ device: any HIDDeviceHandle, callback: @escaping (Int, Data) -> Void) {
+        guard let ioDevice = (device as? IOHIDDeviceHandle)?.device else {
+            return
+        }
+
+        inputReportCallbackWithId = callback
+
+        // Set up the input report callback using the C function pointer approach
+        let bufferPtr = UnsafeMutablePointer<UInt8>.allocate(capacity: inputReportBuffer.count)
+        bufferPtr.initialize(repeating: 0, count: inputReportBuffer.count)
+
+        let context = Unmanaged.passUnretained(self).toOpaque()
+
+        IOHIDDeviceRegisterInputReportCallback(
+            ioDevice,
+            bufferPtr,
+            inputReportBuffer.count,
+            { context, result, sender, type, reportId, report, reportLength in
+                guard let context = context else { return }
+                let adapter = Unmanaged<IOKitHIDAdapter>.fromOpaque(context).takeUnretainedValue()
+
+                let data = Data(bytes: report, count: reportLength)
+                adapter.inputReportCallbackWithId?(Int(reportId), data)
+            },
+            context
+        )
+
+        // Schedule on current run loop
+        IOHIDDeviceScheduleWithRunLoop(ioDevice, CFRunLoopGetCurrent(), CFRunLoopMode.defaultMode.rawValue)
+    }
+
+    /// Register callback for device removal
+    public func registerRemovalCallback(_ device: any HIDDeviceHandle, callback: @escaping () -> Void) {
+        guard let ioDevice = (device as? IOHIDDeviceHandle)?.device else {
+            return
+        }
+
+        removalCallback = callback
+
+        let context = Unmanaged.passUnretained(self).toOpaque()
+
+        IOHIDDeviceRegisterRemovalCallback(
+            ioDevice,
+            { context, result, sender in
+                guard let context = context else { return }
+                let adapter = Unmanaged<IOKitHIDAdapter>.fromOpaque(context).takeUnretainedValue()
+                adapter.removalCallback?()
+            },
+            context
+        )
+    }
+
+    /// Run the event loop for receiving reports
+    public func runLoop() {
+        currentRunLoop = CFRunLoopGetCurrent()
+        CFRunLoopRun()
+    }
+
+    /// Stop the event loop
+    public func stopRunLoop() {
+        if let runLoop = currentRunLoop {
+            CFRunLoopStop(runLoop)
+        }
     }
 
     // MARK: - Private Helpers
