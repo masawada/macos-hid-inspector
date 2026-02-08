@@ -1,0 +1,53 @@
+name: Release
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+jobs:
+  tagpr:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: read
+    outputs:
+      tag: ${{ steps.tagpr.outputs.tag }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          persist-credentials: false
+
+      - id: tagpr
+        uses: Songmu/tagpr@78a926ba835e34721053309043aee696ba9c70b1 # v1.15.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build:
+    needs: tagpr
+    if: needs.tagpr.outputs.tag != ''
+    runs-on: macos-15
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          persist-credentials: false
+
+      - name: Build universal binary
+        run: swift build -c release --arch arm64 --arch x86_64
+
+      - name: Create archive
+        run: |
+          TAG="${{ needs.tagpr.outputs.tag }}"
+          ARCHIVE_NAME="inspect-hid_${TAG}_darwin_universal"
+          mkdir "${ARCHIVE_NAME}"
+          cp .build/apple/Products/Release/inspect-hid "${ARCHIVE_NAME}/"
+          tar czf "${ARCHIVE_NAME}.tar.gz" "${ARCHIVE_NAME}"
+          shasum -a 256 "${ARCHIVE_NAME}.tar.gz" > checksums.txt
+
+      - name: Upload to GitHub Release
+        run: gh release upload "${{ needs.tagpr.outputs.tag }}" *.tar.gz checksums.txt
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
