@@ -388,7 +388,7 @@ struct JSONFormatterUsageTests {
         )
 
         let data = output.data(using: .utf8)!
-        let json = try JSONSerialization.jsonObject(with: data) as! [String: Any]
+        let json = try #require(JSONSerialization.jsonObject(with: data) as? [String: Any])
 
         #expect(json["error"] as? String == "Parse error at byte 2")
         #expect(json["rawBytes"] as? String == "05 01")
