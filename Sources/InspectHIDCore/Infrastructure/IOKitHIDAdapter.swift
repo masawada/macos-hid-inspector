@@ -22,16 +22,6 @@ public final class IOKitHIDAdapter: IOKitHIDAdapterProtocol, @unchecked Sendable
         // Set device matching to all HID devices
         IOHIDManagerSetDeviceMatching(manager, nil)
 
-        // Open manager with error handling
-        let openResult = IOHIDManagerOpen(manager, IOOptionBits(kIOHIDOptionsTypeNone))
-        guard openResult == kIOReturnSuccess else {
-            throw IOKitErrorMapper.mapToInspectHIDError(code: openResult)
-        }
-
-        defer {
-            IOHIDManagerClose(manager, IOOptionBits(kIOHIDOptionsTypeNone))
-        }
-
         // Copy devices
         guard let deviceSet = IOHIDManagerCopyDevices(manager) else {
             return []
