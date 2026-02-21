@@ -14,6 +14,9 @@ public enum InspectHIDError: Error, LocalizedError, Equatable, Sendable {
     /// Permission denied when accessing device
     case permissionDenied(device: String)
 
+    /// Another process has exclusive access to the device
+    case exclusiveAccess(device: String)
+
     /// Device was disconnected during operation
     case deviceDisconnected
 
@@ -36,6 +39,8 @@ public enum InspectHIDError: Error, LocalizedError, Equatable, Sendable {
             return "Invalid device specifier: '\(input)'. Use index number or VID:PID format."
         case .permissionDenied:
             return "Permission denied. Grant Input Monitoring access in System Settings > Privacy & Security."
+        case .exclusiveAccess(let device):
+            return "Cannot access \(device): another process has exclusive access, or Input Monitoring permission has not been granted."
         case .deviceDisconnected:
             return "Device was disconnected."
         case .ioKitError(let code):
@@ -52,7 +57,7 @@ public enum InspectHIDError: Error, LocalizedError, Equatable, Sendable {
         switch self {
         case .deviceNotFound, .invalidDeviceSpecifier, .ambiguousDevice:
             return 1
-        case .permissionDenied:
+        case .permissionDenied, .exclusiveAccess:
             return 2
         case .deviceDisconnected:
             return 3

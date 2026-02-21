@@ -94,6 +94,7 @@ struct ErrorHandlingTests {
             #expect(InspectHIDError.invalidDeviceSpecifier(input: "bad").exitCode == 1)
             #expect(InspectHIDError.ambiguousDevice(count: 2).exitCode == 1)
             #expect(InspectHIDError.permissionDenied(device: "test").exitCode == 2)
+            #expect(InspectHIDError.exclusiveAccess(device: "test").exitCode == 2)
             #expect(InspectHIDError.deviceDisconnected.exitCode == 3)
             #expect(InspectHIDError.ioKitError(code: -1).exitCode == 1)
             #expect(InspectHIDError.reportDescriptorNotAvailable.exitCode == 1)
@@ -234,13 +235,13 @@ struct ErrorHandlingTests {
             }
         }
 
-        @Test("IOKitErrorMapper maps kIOReturnExclusiveAccess to permissionDenied")
-        func mapperMapsExclusiveAccessToPermissionDenied() {
+        @Test("IOKitErrorMapper maps kIOReturnExclusiveAccess to exclusiveAccess")
+        func mapperMapsExclusiveAccessToExclusiveAccess() {
             let error = IOKitErrorMapper.mapToInspectHIDError(code: IOKitErrorMapper.kIOReturnExclusiveAccess)
-            if case .permissionDenied = error {
+            if case .exclusiveAccess = error {
                 #expect(error.exitCode == 2)
             } else {
-                Issue.record("Should map to permissionDenied")
+                Issue.record("Should map to exclusiveAccess")
             }
         }
 
@@ -268,7 +269,12 @@ struct ErrorHandlingTests {
         func isPermissionErrorReturnsTrueForPermissionCodes() {
             #expect(IOKitErrorMapper.isPermissionError(IOKitErrorMapper.kIOReturnNotPermitted))
             #expect(IOKitErrorMapper.isPermissionError(IOKitErrorMapper.kIOReturnNotPrivileged))
-            #expect(IOKitErrorMapper.isPermissionError(IOKitErrorMapper.kIOReturnExclusiveAccess))
+        }
+
+        @Test("IOKitErrorMapper.isExclusiveAccessError returns true for exclusive access code")
+        func isExclusiveAccessErrorReturnsTrueForExclusiveAccessCode() {
+            #expect(IOKitErrorMapper.isExclusiveAccessError(IOKitErrorMapper.kIOReturnExclusiveAccess))
+            #expect(!IOKitErrorMapper.isExclusiveAccessError(IOKitErrorMapper.kIOReturnNotPermitted))
         }
 
         @Test("IOKitErrorMapper.isPermissionError returns false for other codes")

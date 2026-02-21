@@ -28,7 +28,7 @@ struct IOKitHIDAdapterTests {
             // Permission error is expected in sandboxed/restricted environments
             // Verify the error is properly mapped to InspectHIDError
             switch error {
-            case .permissionDenied, .ioKitError:
+            case .permissionDenied, .exclusiveAccess, .ioKitError:
                 // These are acceptable errors in restricted environments
                 break
             default:

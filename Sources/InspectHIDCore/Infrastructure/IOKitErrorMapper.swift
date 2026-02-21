@@ -45,8 +45,10 @@ public struct IOKitErrorMapper {
         let device = deviceName ?? "HID Device"
 
         switch code {
-        case kIOReturnNotPermitted, kIOReturnNotPrivileged, kIOReturnExclusiveAccess:
+        case kIOReturnNotPermitted, kIOReturnNotPrivileged:
             return .permissionDenied(device: device)
+        case kIOReturnExclusiveAccess:
+            return .exclusiveAccess(device: device)
         case kIOReturnNoDevice, kIOReturnNotAttached:
             return .deviceDisconnected
         default:
@@ -66,10 +68,17 @@ public struct IOKitErrorMapper {
     /// - Returns: true if the code indicates a permission-related error
     public static func isPermissionError(_ code: Int32) -> Bool {
         switch code {
-        case kIOReturnNotPermitted, kIOReturnNotPrivileged, kIOReturnExclusiveAccess:
+        case kIOReturnNotPermitted, kIOReturnNotPrivileged:
             return true
         default:
             return false
         }
+    }
+
+    /// Checks if the given IOKit return code indicates an exclusive access error
+    /// - Parameter code: The IOKit return code
+    /// - Returns: true if the code indicates an exclusive access error
+    public static func isExclusiveAccessError(_ code: Int32) -> Bool {
+        return code == kIOReturnExclusiveAccess
     }
 }
