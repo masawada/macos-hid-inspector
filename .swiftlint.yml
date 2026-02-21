@@ -1,0 +1,31 @@
+excluded:
+  - .build
+
+disabled_rules:
+  - trailing_comma
+  - todo
+
+line_length:
+  warning: 150
+  error: 200
+
+type_body_length:
+  warning: 500
+  error: 600
+
+file_length:
+  warning: 700
+  error: 1000
+
+function_body_length:
+  warning: 60
+  error: 100
+
+cyclomatic_complexity:
+  warning: 20
+  error: 40
+
+identifier_name:
+  excluded:
+    - i
+    - id

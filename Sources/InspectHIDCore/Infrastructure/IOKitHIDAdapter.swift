@@ -32,7 +32,8 @@ public final class IOKitHIDAdapter: IOKitHIDAdapterProtocol, @unchecked Sendable
         // A single physical device can expose multiple HID interfaces (e.g., keyboard + media keys)
         // sharing the same location/vendor/product IDs, so we also sort by usage page and usage
         // to guarantee a total order.
-        let sortedDevices = (deviceSet as! Set<IOHIDDevice>).sorted { device1, device2 in
+        guard let ioDevices = deviceSet as? Set<IOHIDDevice> else { return [] }
+        let sortedDevices = ioDevices.sorted { device1, device2 in
             let locationId1 = getIntProperty(device1, key: kIOHIDLocationIDKey) ?? 0
             let locationId2 = getIntProperty(device2, key: kIOHIDLocationIDKey) ?? 0
             if locationId1 != locationId2 {
@@ -201,7 +202,7 @@ public final class IOKitHIDAdapter: IOKitHIDAdapterProtocol, @unchecked Sendable
             ioDevice,
             bufferPtr,
             inputReportBuffer.count,
-            { context, result, sender, type, reportId, report, reportLength in
+            { context, _, _, _, reportId, report, reportLength in
                 guard let context = context else { return }
                 let adapter = Unmanaged<IOKitHIDAdapter>.fromOpaque(context).takeUnretainedValue()
 
@@ -227,7 +228,7 @@ public final class IOKitHIDAdapter: IOKitHIDAdapterProtocol, @unchecked Sendable
 
         IOHIDDeviceRegisterRemovalCallback(
             ioDevice,
-            { context, result, sender in
+            { context, _, _ in
                 guard let context = context else { return }
                 let adapter = Unmanaged<IOKitHIDAdapter>.fromOpaque(context).takeUnretainedValue()
                 adapter.removalCallback?()

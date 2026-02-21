@@ -126,7 +126,12 @@ public final class HIDDeviceService: HIDDeviceServiceProtocol, @unchecked Sendab
     ///   - exclusive: If true, seize device for exclusive access. If false, open in shared mode.
     ///   - onReport: Callback called when a report is received
     ///   - onDisconnect: Callback called when the device is disconnected
-    public func startMonitoring(specifier: DeviceSpecifier, exclusive: Bool, onReport: @escaping (HIDReport) -> Void, onDisconnect: @escaping () -> Void) throws {
+    public func startMonitoring(
+        specifier: DeviceSpecifier,
+        exclusive: Bool,
+        onReport: @escaping (HIDReport) -> Void,
+        onDisconnect: @escaping () -> Void
+    ) throws {
         let devices = try adapter.enumerateDevices()
         let device = try resolveDevice(specifier: specifier, from: devices)
 

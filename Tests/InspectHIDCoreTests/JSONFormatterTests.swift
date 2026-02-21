@@ -25,7 +25,7 @@ struct JSONFormatterTests {
 
         // Should be valid JSON
         let data = result.data(using: .utf8)!
-        let parsed = try JSONSerialization.jsonObject(with: data) as! [[String: Any]]
+        let parsed = try #require(JSONSerialization.jsonObject(with: data) as? [[String: Any]])
 
         #expect(parsed.count == 1)
         let device = parsed[0]
@@ -61,7 +61,7 @@ struct JSONFormatterTests {
         let result = JSONFormatter.formatDeviceList(devices)
 
         let data = result.data(using: .utf8)!
-        let parsed = try JSONSerialization.jsonObject(with: data) as! [[String: Any]]
+        let parsed = try #require(JSONSerialization.jsonObject(with: data) as? [[String: Any]])
 
         #expect(parsed.count == 2)
         #expect(parsed[0]["vendorId"] as? String == "0x1234")
@@ -75,7 +75,7 @@ struct JSONFormatterTests {
         let result = JSONFormatter.formatDeviceList(devices)
 
         let data = result.data(using: .utf8)!
-        let parsed = try JSONSerialization.jsonObject(with: data) as! [[String: Any]]
+        let parsed = try #require(JSONSerialization.jsonObject(with: data) as? [[String: Any]])
 
         #expect(parsed.count == 0)
     }
@@ -96,7 +96,7 @@ struct JSONFormatterTests {
         let result = JSONFormatter.formatDeviceList(devices)
 
         let data = result.data(using: .utf8)!
-        let parsed = try JSONSerialization.jsonObject(with: data) as! [[String: Any]]
+        let parsed = try #require(JSONSerialization.jsonObject(with: data) as? [[String: Any]])
 
         // VID/PID should be 0x prefixed lowercase hex
         #expect(parsed[0]["vendorId"] as? String == "0x00ff")
@@ -122,7 +122,7 @@ struct JSONFormatterTests {
         let result = JSONFormatter.formatDeviceDescriptor(descriptor)
 
         let data = result.data(using: .utf8)!
-        let parsed = try JSONSerialization.jsonObject(with: data) as! [String: Any]
+        let parsed = try #require(JSONSerialization.jsonObject(with: data) as? [String: Any])
 
         #expect(parsed["bDeviceClass"] as? Int == 3)
         #expect(parsed["bDeviceSubClass"] as? Int == 1)
@@ -152,7 +152,7 @@ struct JSONFormatterTests {
         let result = JSONFormatter.formatDeviceDescriptor(descriptor)
 
         let data = result.data(using: .utf8)!
-        let parsed = try JSONSerialization.jsonObject(with: data) as! [String: Any]
+        let parsed = try #require(JSONSerialization.jsonObject(with: data) as? [String: Any])
 
         #expect(parsed["idVendor"] as? String == "0xabcd")
         #expect(parsed["idProduct"] as? String == "0xef01")
@@ -169,7 +169,7 @@ struct JSONFormatterTests {
         let result = JSONFormatter.formatHIDReport(report)
 
         let data = result.data(using: .utf8)!
-        let parsed = try JSONSerialization.jsonObject(with: data) as! [String: Any]
+        let parsed = try #require(JSONSerialization.jsonObject(with: data) as? [String: Any])
 
         // Data should be hex string with spaces
         #expect(parsed["data"] as? String == "01 02 FF 00 AB")
@@ -185,7 +185,7 @@ struct JSONFormatterTests {
         let result = JSONFormatter.formatHIDReport(report)
 
         let data = result.data(using: .utf8)!
-        let parsed = try JSONSerialization.jsonObject(with: data) as! [String: Any]
+        let parsed = try #require(JSONSerialization.jsonObject(with: data) as? [String: Any])
 
         // Timestamp should be ISO8601 format
         let timestampStr = parsed["timestamp"] as? String
@@ -202,7 +202,7 @@ struct JSONFormatterTests {
         let result = JSONFormatter.formatHIDReport(report)
 
         let data = result.data(using: .utf8)!
-        let parsed = try JSONSerialization.jsonObject(with: data) as! [String: Any]
+        let parsed = try #require(JSONSerialization.jsonObject(with: data) as? [String: Any])
 
         #expect(parsed["reportId"] as? Int == 5)
     }
@@ -216,7 +216,7 @@ struct JSONFormatterTests {
         let result = JSONFormatter.formatHIDReport(report)
 
         let data = result.data(using: .utf8)!
-        let parsed = try JSONSerialization.jsonObject(with: data) as! [String: Any]
+        let parsed = try #require(JSONSerialization.jsonObject(with: data) as? [String: Any])
 
         #expect(parsed["data"] as? String == "")
     }
