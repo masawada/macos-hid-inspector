@@ -12,19 +12,26 @@ let package = Package(
         .library(name: "InspectHIDCore", targets: ["InspectHIDCore"])
     ],
     dependencies: [
-        .package(url: "https://github.com/apple/swift-argument-parser.git", from: "1.3.0")
+        .package(url: "https://github.com/apple/swift-argument-parser.git", from: "1.3.0"),
+        .package(url: "https://github.com/SimplyDanny/SwiftLintPlugins", from: "0.58.0"),
     ],
     targets: [
         .executableTarget(
             name: "InspectHID",
             dependencies: [
                 "InspectHIDCore"
+            ],
+            plugins: [
+                .plugin(name: "SwiftLintBuildToolPlugin", package: "SwiftLintPlugins"),
             ]
         ),
         .target(
             name: "InspectHIDCore",
             dependencies: [
                 .product(name: "ArgumentParser", package: "swift-argument-parser")
+            ],
+            plugins: [
+                .plugin(name: "SwiftLintBuildToolPlugin", package: "SwiftLintPlugins"),
             ]
         ),
         .testTarget(
@@ -32,6 +39,9 @@ let package = Package(
             dependencies: [
                 "InspectHIDCore",
                 .product(name: "ArgumentParser", package: "swift-argument-parser")
+            ],
+            plugins: [
+                .plugin(name: "SwiftLintBuildToolPlugin", package: "SwiftLintPlugins"),
             ]
         )
     ]
