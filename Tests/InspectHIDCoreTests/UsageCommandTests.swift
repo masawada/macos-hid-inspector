@@ -35,7 +35,7 @@ struct UsageCommandTests {
 struct TextFormatterUsageTests {
 
     @Test("formatReportDescriptor displays byte-level dump with descriptions")
-    func formatByteLevelDump() {
+    func formatByteLevelDump() throws {
         let lookup = UsageTableLookup()
         let parser = ReportDescriptorParser()
         let data = Data([
@@ -47,7 +47,7 @@ struct TextFormatterUsageTests {
             0xC0,        //   End Collection
             0xC0         // End Collection
         ])
-        let descriptor = try! parser.parse(data: data)
+        let descriptor = try parser.parse(data: data)
 
         let output = TextFormatter.formatReportDescriptor(
             parsedItems: descriptor.parsedItems,
@@ -141,7 +141,7 @@ struct TextFormatterUsageTests {
     }
 
     @Test("formatReportDescriptor indents inside collections")
-    func formatIndentation() {
+    func formatIndentation() throws {
         let lookup = UsageTableLookup()
         let parser = ReportDescriptorParser()
         let data = Data([
@@ -154,7 +154,7 @@ struct TextFormatterUsageTests {
             0xC0,        //   End Collection
             0xC0         // End Collection
         ])
-        let descriptor = try! parser.parse(data: data)
+        let descriptor = try parser.parse(data: data)
 
         let output = TextFormatter.formatReportDescriptor(
             parsedItems: descriptor.parsedItems,
@@ -222,7 +222,7 @@ struct TextFormatterUsageTests {
     }
 
     @Test("formatReportDescriptor full mouse descriptor")
-    func formatFullMouseDescriptor() {
+    func formatFullMouseDescriptor() throws {
         let lookup = UsageTableLookup()
         let parser = ReportDescriptorParser()
         let data = Data([
@@ -253,7 +253,7 @@ struct TextFormatterUsageTests {
             0xC0,        //   End Collection
             0xC0         // End Collection
         ])
-        let descriptor = try! parser.parse(data: data)
+        let descriptor = try parser.parse(data: data)
 
         let output = TextFormatter.formatReportDescriptor(
             parsedItems: descriptor.parsedItems,
