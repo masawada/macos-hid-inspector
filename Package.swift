@@ -20,18 +20,12 @@ let package = Package(
             name: "InspectHID",
             dependencies: [
                 "InspectHIDCore"
-            ],
-            plugins: [
-                .plugin(name: "SwiftLintBuildToolPlugin", package: "SwiftLintPlugins"),
             ]
         ),
         .target(
             name: "InspectHIDCore",
             dependencies: [
                 .product(name: "ArgumentParser", package: "swift-argument-parser")
-            ],
-            plugins: [
-                .plugin(name: "SwiftLintBuildToolPlugin", package: "SwiftLintPlugins"),
             ]
         ),
         .testTarget(
@@ -39,9 +33,6 @@ let package = Package(
             dependencies: [
                 "InspectHIDCore",
                 .product(name: "ArgumentParser", package: "swift-argument-parser")
-            ],
-            plugins: [
-                .plugin(name: "SwiftLintBuildToolPlugin", package: "SwiftLintPlugins"),
             ]
         )
     ]
