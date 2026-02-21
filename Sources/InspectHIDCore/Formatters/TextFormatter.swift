@@ -139,6 +139,7 @@ public enum TextFormatter {
 
     // MARK: - Private Item Description
 
+    // swiftlint:disable:next cyclomatic_complexity function_body_length
     private static func describeItem(
         _ item: ReportDescriptorItem,
         currentUsagePage: UInt16,
