@@ -201,7 +201,7 @@ public final class IOKitHIDAdapter: IOKitHIDAdapterProtocol, @unchecked Sendable
             ioDevice,
             bufferPtr,
             inputReportBuffer.count,
-            { context, result, sender, type, reportId, report, reportLength in
+            { context, _, _, _, reportId, report, reportLength in
                 guard let context = context else { return }
                 let adapter = Unmanaged<IOKitHIDAdapter>.fromOpaque(context).takeUnretainedValue()
 
@@ -227,7 +227,7 @@ public final class IOKitHIDAdapter: IOKitHIDAdapterProtocol, @unchecked Sendable
 
         IOHIDDeviceRegisterRemovalCallback(
             ioDevice,
-            { context, result, sender in
+            { context, _, _ in
                 guard let context = context else { return }
                 let adapter = Unmanaged<IOKitHIDAdapter>.fromOpaque(context).takeUnretainedValue()
                 adapter.removalCallback?()
