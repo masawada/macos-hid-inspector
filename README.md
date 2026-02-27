@@ -18,15 +18,29 @@ A command-line tool for inspecting and monitoring Human Interface Devices (HID) 
 
 ## Installation
 
+### Homebrew (Recommended)
+
+```bash
+brew install masawada/tap/macos-hid-inspector
+```
+
+### GitHub Releases
+
+Download the latest archive from [GitHub Releases](https://github.com/masawada/macos-hid-inspector/releases) and install:
+
+```bash
+tar xzf inspect-hid_v*.tar.gz
+sudo install inspect-hid_*/inspect-hid /usr/local/bin/
+```
+
 ### Build from source
 
 ```bash
 git clone https://github.com/masawada/macos-hid-inspector.git
 cd macos-hid-inspector
 swift build -c release
+sudo install .build/release/inspect-hid /usr/local/bin/
 ```
-
-The binary will be at `.build/release/inspect-hid`.
 
 ## Permissions
 
