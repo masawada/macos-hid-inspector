@@ -28,31 +28,54 @@ jobs:
     needs: tagpr
     if: needs.tagpr.outputs.tag != ''
     runs-on: macos-15
-    permissions:
-      contents: write
+    strategy:
+      matrix:
+        arch: [arm64, x86_64]
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           persist-credentials: false
 
-      - name: Build universal binary
-        run: swift build -c release --arch arm64 --arch x86_64
+      - name: Build binary
+        run: swift build -c release --arch ${{ matrix.arch }}
 
       - name: Create archive
         run: |
           TAG="${{ needs.tagpr.outputs.tag }}"
-          ARCHIVE_NAME="inspect-hid_${TAG}_darwin_universal"
+          ARCHIVE_NAME="inspect-hid_${TAG}_darwin_${{ matrix.arch }}"
           mkdir "${ARCHIVE_NAME}"
-          cp .build/apple/Products/Release/inspect-hid "${ARCHIVE_NAME}/"
+          cp .build/release/inspect-hid "${ARCHIVE_NAME}/"
           tar czf "${ARCHIVE_NAME}.tar.gz" "${ARCHIVE_NAME}"
-          shasum -a 256 "${ARCHIVE_NAME}.tar.gz" > checksums.txt
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@ea165f8d65b6db9b8a4d0d969e902c97e56c3075 # v4
+        with:
+          name: archive-${{ matrix.arch }}
+          path: "*.tar.gz"
+
+  release:
+    needs: [tagpr, build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          pattern: archive-*
+          merge-multiple: true
+
+      - name: Generate checksums
+        run: sha256sum *.tar.gz > checksums.txt
 
       - name: Upload to GitHub Release
         run: gh release upload "${{ needs.tagpr.outputs.tag }}" *.tar.gz checksums.txt
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
 
       - name: Publish GitHub Release
         run: gh release edit "${{ needs.tagpr.outputs.tag }}" --draft=false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
