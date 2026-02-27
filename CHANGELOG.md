@@ -1,5 +1,8 @@
 # Changelog
 
+## [v0.2.2](https://github.com/masawada/macos-hid-inspector/compare/v0.2.1...v0.2.2) - 2026-02-27
+- rename x86_64 to amd64 in release archive name by @masawada in https://github.com/masawada/macos-hid-inspector/pull/19
+
 ## [v0.2.1](https://github.com/masawada/macos-hid-inspector/compare/v0.2.0...v0.2.1) - 2026-02-27
 - Fix release CI by bumping artifact actions to v7 by @masawada in https://github.com/masawada/macos-hid-inspector/pull/16
 
