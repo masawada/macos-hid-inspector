@@ -3,6 +3,9 @@
 ## [v0.2.1](https://github.com/masawada/macos-hid-inspector/compare/v0.2.0...v0.2.1) - 2026-02-27
 - Fix release CI by bumping artifact actions to v7 by @masawada in https://github.com/masawada/macos-hid-inspector/pull/16
 
+## [v0.2.1](https://github.com/masawada/macos-hid-inspector/compare/v0.2.0...v0.2.1) - 2026-02-27
+- Fix release CI by bumping artifact actions to v7 by @masawada in https://github.com/masawada/macos-hid-inspector/pull/16
+
 ## [v0.2.0](https://github.com/masawada/macos-hid-inspector/compare/v0.1.2...v0.2.0) - 2026-02-27
 - Split release binaries into per-architecture archives by @masawada in https://github.com/masawada/macos-hid-inspector/pull/14
 
