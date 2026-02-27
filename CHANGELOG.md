@@ -1,5 +1,8 @@
 # Changelog
 
+## [v0.2.3](https://github.com/masawada/macos-hid-inspector/compare/v0.2.2...v0.2.3) - 2026-02-27
+- Update README with installation instructions by @masawada in https://github.com/masawada/macos-hid-inspector/pull/21
+
 ## [v0.2.2](https://github.com/masawada/macos-hid-inspector/compare/v0.2.1...v0.2.2) - 2026-02-27
 - rename x86_64 to amd64 in release archive name by @masawada in https://github.com/masawada/macos-hid-inspector/pull/19
 
