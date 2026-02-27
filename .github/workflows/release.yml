@@ -30,7 +30,11 @@ jobs:
     runs-on: macos-15
     strategy:
       matrix:
-        arch: [arm64, x86_64]
+        include:
+          - arch: arm64
+            archive_arch: arm64
+          - arch: x86_64
+            archive_arch: amd64
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
@@ -42,7 +46,7 @@ jobs:
       - name: Create archive
         run: |
           TAG="${{ needs.tagpr.outputs.tag }}"
-          ARCHIVE_NAME="inspect-hid_${TAG}_darwin_${{ matrix.arch }}"
+          ARCHIVE_NAME="inspect-hid_${TAG}_darwin_${{ matrix.archive_arch }}"
           mkdir "${ARCHIVE_NAME}"
           cp .build/release/inspect-hid "${ARCHIVE_NAME}/"
           tar czf "${ARCHIVE_NAME}.tar.gz" "${ARCHIVE_NAME}"
@@ -50,7 +54,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7
         with:
-          name: archive-${{ matrix.arch }}
+          name: archive-${{ matrix.archive_arch }}
           path: "*.tar.gz"
 
   release:
