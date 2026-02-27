@@ -1,5 +1,8 @@
 # Changelog
 
+## [v0.2.0](https://github.com/masawada/macos-hid-inspector/compare/v0.1.2...v0.2.0) - 2026-02-27
+- Split release binaries into per-architecture archives by @masawada in https://github.com/masawada/macos-hid-inspector/pull/14
+
 ## [v0.1.2](https://github.com/masawada/macos-hid-inspector/compare/v0.1.1...v0.1.2) - 2026-02-21
 - Update actions/checkout to v6 by @masawada in https://github.com/masawada/macos-hid-inspector/pull/6
 - Add Dependabot configuration by @masawada in https://github.com/masawada/macos-hid-inspector/pull/8
