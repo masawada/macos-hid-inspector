@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.2.4](https://github.com/masawada/macos-hid-inspector/compare/v0.2.3...v0.2.4) - 2026-05-02
+- Bump Songmu/tagpr from 1.17.0 to 1.17.1 by @dependabot[bot] in https://github.com/masawada/macos-hid-inspector/pull/23
+- Bump actions/download-artifact from 7.0.0 to 8.0.0 by @dependabot[bot] in https://github.com/masawada/macos-hid-inspector/pull/24
+- Bump github.com/apple/swift-argument-parser from 1.7.0 to 1.7.1 by @dependabot[bot] in https://github.com/masawada/macos-hid-inspector/pull/27
+- Bump actions/download-artifact from 8.0.0 to 8.0.1 by @dependabot[bot] in https://github.com/masawada/macos-hid-inspector/pull/26
+- Bump actions/upload-artifact from 7.0.0 to 7.0.1 by @dependabot[bot] in https://github.com/masawada/macos-hid-inspector/pull/28
+- Bump Songmu/tagpr from 1.17.1 to 1.18.3 by @dependabot[bot] in https://github.com/masawada/macos-hid-inspector/pull/30
+
 ## [v0.2.3](https://github.com/masawada/macos-hid-inspector/compare/v0.2.2...v0.2.3) - 2026-02-27
 - Update README with installation instructions by @masawada in https://github.com/masawada/macos-hid-inspector/pull/21
 
