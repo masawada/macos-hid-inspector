@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.2.5](https://github.com/masawada/macos-hid-inspector/compare/v0.2.4...v0.2.5) - 2026-07-06
+
+- Bump Songmu/tagpr from 1.18.3 to 1.20.0 by @dependabot[bot] in https://github.com/masawada/macos-hid-inspector/pull/34
+- Bump github.com/apple/swift-argument-parser from 1.7.1 to 1.8.2 by @dependabot[bot] in https://github.com/masawada/macos-hid-inspector/pull/36
+- Bump actions/checkout from 6.0.2 to 7.0.0 by @dependabot[bot] in https://github.com/masawada/macos-hid-inspector/pull/37
+- Bump github.com/simplydanny/swiftlintplugins from 0.63.2 to 0.65.0 by @dependabot[bot] in https://github.com/masawada/macos-hid-inspector/pull/39
+- Fix GitHub Actions version comments to match pinned hashes by @masawada in https://github.com/masawada/macos-hid-inspector/pull/41
+
 ## [v0.2.4](https://github.com/masawada/macos-hid-inspector/compare/v0.2.3...v0.2.4) - 2026-05-02
 - Bump Songmu/tagpr from 1.17.0 to 1.17.1 by @dependabot[bot] in https://github.com/masawada/macos-hid-inspector/pull/23
 - Bump actions/download-artifact from 7.0.0 to 8.0.0 by @dependabot[bot] in https://github.com/masawada/macos-hid-inspector/pull/24
