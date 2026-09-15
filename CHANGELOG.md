@@ -1,5 +1,12 @@
 # Changelog
 
+## [v0.2.6](https://github.com/masawada/macos-hid-inspector/compare/v0.2.5...v0.2.6) - 2026-09-15
+
+- Bump actions/checkout from 7.0.0 to 7.0.1 by @dependabot[bot] in https://github.com/masawada/macos-hid-inspector/pull/43
+- Bump github.com/simplydanny/swiftlintplugins from 0.65.0 to 0.65.1 by @dependabot[bot] in https://github.com/masawada/macos-hid-inspector/pull/45
+- Bump Songmu/tagpr from 1.20.0 to 1.20.3 by @dependabot[bot] in https://github.com/masawada/macos-hid-inspector/pull/46
+- Add xcode-27 runner to test matrix for macOS 27 by @masawada in https://github.com/masawada/macos-hid-inspector/pull/48
+
 ## [v0.2.5](https://github.com/masawada/macos-hid-inspector/compare/v0.2.4...v0.2.5) - 2026-07-06
 
 - Bump Songmu/tagpr from 1.18.3 to 1.20.0 by @dependabot[bot] in https://github.com/masawada/macos-hid-inspector/pull/34
